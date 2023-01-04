@@ -9,6 +9,8 @@ import com.tcb.cloudstorage.mapper.UserMapper;
 import com.tcb.cloudstorage.object_op.FileUpLoadWithTM;
 import com.tcb.cloudstorage.service.UserService;
 import com.tcb.cloudstorage.transfer_manager.TransferManagerManage;
+import com.tcb.cloudstorage.utils.CheckCodeGenerate;
+import com.tcb.cloudstorage.utils.EmailService;
 import com.tcb.cloudstorage.utils.MultipartFileToFile;
 import com.tcb.cloudstorage.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,6 +21,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.GeneralSecurityException;
 
 @RestController
 @RequestMapping("/user")
@@ -48,13 +51,47 @@ public class UserController
     }
 
     @RequestMapping("/changePwd")
-    public R changePwd(String username, String oldPwd, String newPwd)
+    public R changePwd(String username, String oldPwd, String newPwd, String checkCode)
     {
-        boolean b = userService.changePassword(username, oldPwd, newPwd);
-        if (b)
-            return new R(true, "密码更新成功，请重新登录!");
-        else
-            return new R(false, "密码错误，请重试!");
+        User user = new User();
+        user.setUsername(username);
+        boolean b1 = userService.compareCheckCode(user, checkCode);
+        if (b1)
+        {
+            boolean b2 = userService.changePassword(username, oldPwd, newPwd);
+            if (b2) {
+                return new R(true, "密码更新成功，请重新登录!");
+            }
+            else {
+                System.out.println("密码错误，请重试!");
+                return new R(false, "密码错误，请重试!");
+            }
+        }else
+            return new R(false, "验证码错误，请重新输入!");
+    }
+
+    @RequestMapping("/getCheckCode")
+    public R sendCheckCode(String username, String password)
+    {
+        User user = new User(username, password);
+        //根据用户名密码查询用户完整信息
+        User userInfo = userService.getUserInfo(user);
+        if (userInfo == null)
+            return new R(false, "用户名或密码错误");
+        try
+        {
+            //生成验证码
+            String checkCode = CheckCodeGenerate.getCheckCode();
+            //保存到redis中
+            userService.saveCheckCode(userInfo, checkCode);
+            //同时发送到用户邮箱
+            EmailService.sendEmail(userInfo, checkCode);
+        } catch (GeneralSecurityException e)
+        {
+            e.printStackTrace();
+            return new R(false, "验证码发送失败!");
+        }
+        return new R(true, "验证码发送成功!");
     }
 
     @RequestMapping("/fileUpLoad")

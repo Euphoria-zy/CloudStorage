@@ -38,7 +38,7 @@
                 <input name="checkcode" id="input-val" lay-verify="required" placeholder="验证码"  type="text" class="layui-input">
             </div>
             <div class="layui-col-md4 layui-col-md-offset1">
-                <canvas id="canvas" class="layui-input" style="height: 50px;"></canvas>
+                <input type="button" id="checkCode-btn" style="width: 113px; height: 50px; padding: unset" value="获取验证码"></input>
             </div>
         </div>
         <hr class="hr15">
@@ -50,22 +50,50 @@
 
 <script>
     $(function (){
+        $("#checkCode-btn").click(function() {
+            var checkBtn = document.getElementById("checkCode-btn");
+            var username = document.getElementById("username").value;
+            var oldPwd = document.getElementById("oldPwd").value;
+            checkBtn.disabled = 'disabled';
+            $.ajax({
+                type: "post",
+                url: "user/getCheckCode",
+                data:{"username":username,"password":oldPwd},
+                success: function (data)
+                {
+                    if (data.flag){
+                        alert(data.msg);
+                        var time = 120;
+                        var timer = setInterval(function() {
+                            if (time == -1) {
+                                clearInterval(timer)
+                                checkBtn.disabled = '';
+                                checkBtn.value = '获取验证码';
+                            } else {
+                                checkBtn.value = time + '秒后重新获取';
+                                time--;
+                            }
+                        }, 1000);
+                    }else
+                        alert(data.msg);
+                }
+            });
+        });
         $("#changePwd-btn").click(function () {
             var username = document.getElementById("username").value;
             var oldPwd = document.getElementById("oldPwd").value;
             var newPwd = document.getElementById("newPwd").value;
+            var checkCode = document.getElementById("input-val").value;
             $.ajax({
                 type: "post",
                 url: "user/changePwd",
-                data:{"username":username,"oldPwd":oldPwd,"newPwd":newPwd},
+                data:{"username":username,"oldPwd":oldPwd,"newPwd":newPwd,"checkCode":checkCode},
                 success: function (data)
                 {
+                    alert(data.msg);
                     if(data.flag == true) {
-                        console.log(121);
                         location.href = "login.html";
                     }
-                    else
-                        alert("用户名或密码错误!");
                 }
             });
         })

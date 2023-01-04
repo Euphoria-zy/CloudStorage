@@ -46,7 +46,7 @@ function draw(show_num)
         context.translate(x, y);
         context.rotate(deg);
         context.fillStyle = randomColor();
-        context.fillText(txt, 0, 0);
+        context.fillText(show_num[i], 0, 0);
         context.rotate(-deg);
         context.translate(-x, -y);
     }

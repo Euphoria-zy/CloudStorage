@@ -14,4 +14,10 @@ public interface UserService
     public boolean register(User user);
 
     public boolean changePassword(String username, String oldPwd, String newPwd);
+
+    public boolean compareCheckCode(User user, String checkCode);
+
+    public void saveCheckCode(User user, String checkCode);
+
+    public User getUserInfo(User user);
 }

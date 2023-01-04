@@ -28,6 +28,8 @@
         <hr class="hr15">
         <input name="checkPwd" id="checkPwd" lay-verify="required" placeholder="确认密码"  type="password" class="layui-input">
         <hr class="hr15">
+        <input name="email" id="email" lay-verify="required" placeholder="电子邮箱"  type="text" class="layui-input">
+        <hr class="hr15">
         <div class="layui-row">
             <div class="layui-col-md7">
                 <input name="checkcode" id="input-val" lay-verify="required" placeholder="验证码"  type="text" class="layui-input">
@@ -48,11 +50,12 @@
             var username = document.getElementById("username").value;
             var password = document.getElementById("password").value;
             var checkPwd = document.getElementById("checkPwd").value;
+            var email = document.getElementById("email").value;
             if (password === checkPwd){
                 $.ajax({
                     type: "post",
                     url: "user/register",
-                    data:{"username":username,"password":password},
+                    data:{"username":username,"password":password,"email":email},
                     success: function (data)
                     {
                         if(data.flag == true) {
