@@ -386,6 +386,7 @@
             },
             handleEdit(row){
                 var hint,inputErrorMsg, inputRule, inputValue;
+                var that = this;
                 if (row.fileType != null){
                     hint = "请输入文件名: ";
                     inputErrorMsg = "文件名称格式不对!";
@@ -407,11 +408,10 @@
                         if (action == 'confirm'){
                             var nowFolderId = parseInt($('#nowF').html());
                             if (row.fileType != null){
-                                this.editFileName(row.fileId, instance.inputValue, nowFolderId);
+                                that.editFileName(row.fileId, instance.inputValue, nowFolderId);
                             }else {
-                                this.editFolderName(row.folderId, instance.inputValue, nowFolderId);
+                                that.editFolderName(row.folderId, instance.inputValue, nowFolderId);
                             }
-                            this.getAll(nowFolderId);
                         }
                     }
                 }).then(({ value }) => {
@@ -435,6 +435,7 @@
                     }else {
                         this.$message.error(res.data.msg);
                     }
+                    this.getAll(nowFolderId);
                 });
             },
             editFolderName(folderId, name, nowFolderId) {
@@ -449,6 +450,7 @@
                     }else {
                         this.$message.error(res.data.msg);
                     }
+                    this.getAll(nowFolderId);
                 });
             },
             //删除文件

@@ -383,8 +383,18 @@ public class FunctionController extends BaseController
     @RequestMapping("/renameFolder")
     public R RenameFolder(@RequestParam int folderId, @RequestParam String newFolderName, @RequestParam int parentFolderId)
     {
-
-        return new R();
+        Folder folder = folderService.getFolderById(folderId);
+        Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, newFolderName);
+        if (folderByPIdAndName != null){
+            return new R(false, "重命名失败，当前文件夹: "+newFolderName+"已存在!");
+        }else {
+            folder.setFolderName(newFolderName);
+            boolean b1 = folderService.updateFolder(folder);
+            if (b1){
+                return new R(true, "文件夹重命名成功!");
+            }else
+                return new R(false, "文件夹重命名失败!");
+        }
     }
 
     /**
@@ -474,4 +484,5 @@ public class FunctionController extends BaseController
         if (b1)
             folderService.deleteFolder(folder.getFolderId());
     }
+
 }
