@@ -14,8 +14,10 @@ import java.util.Properties;
 
 public class EmailService
 {
+    public static String EMAIL_TITLE1 = "加密极速云盘：注册验证";
+    public static String EMAIL_TITLE2 = "加密极速云盘：找回密码";
     //发送密码
-    public static void sendEmail(User user, String checkCode) throws GeneralSecurityException
+    public static void sendEmail(User user, String checkCode, int codeType) throws GeneralSecurityException
     {
         //账户信息
         String accountId;
@@ -70,7 +72,10 @@ public class EmailService
             //邮件接收人
             mimeMessage.setRecipient(Message.RecipientType.TO, new InternetAddress(user.getEmail()));
             //邮件标题
-            mimeMessage.setSubject("自动摘要系统：找回密码");
+            if (codeType == 1)
+                mimeMessage.setSubject(EMAIL_TITLE1);
+            else
+                mimeMessage.setSubject(EMAIL_TITLE2);
             //邮件内容
             mimeMessage.setText("您好！" + user.getUsername() + "\n您的验证码是：" + checkCode);
             //发送邮件

@@ -25,7 +25,7 @@ import java.security.GeneralSecurityException;
 
 @RestController
 @RequestMapping("/user")
-public class UserController
+public class UserController extends BaseController
 {
     @Autowired
     private UserService userService;
@@ -33,51 +33,85 @@ public class UserController
     @RequestMapping("/login")
     public R login(User user)
     {
-        boolean login = userService.login(user);
-        if (login)
-            return new R(true, "登陆成功!");
-        else
-            return new R(false, "登录失败!");
+        User userInfo = userService.getUserInfo(user);
+        if (userInfo != null){
+            session.setAttribute("loginUser", userInfo);
+            System.out.println("登陆成功:"+userInfo.getUsername());
+            return new R(true, "登陆成功，跳转到首页!");
+        } else
+            return new R(false, "登录失败,用户名或密码错误!");
     }
 
     @RequestMapping("/register")
-    public R register(User user)
+    public R register(String username, String password, String email, String checkCode)
     {
-        boolean register = userService.register(user);
-        if (register)
-            return new R(true, "注册成功，返回登录页面!");
-        else
-            return new R(false, "注册失败，用户名已存在!");
+        User user = new User(username,password,email);
+        boolean b = userService.compareCheckCode(user, checkCode);
+        if (b){
+            boolean register = userService.register(user);
+            if (register)
+                return new R(true, "注册成功，返回登录页面!");
+            else
+                return new R(false, "注册失败，用户名已存在!");
+        }else {
+            return new R(false, "验证码错误，请重新输入!");
+        }
     }
 
-    @RequestMapping("/changePwd")
-    public R changePwd(String username, String oldPwd, String newPwd, String checkCode)
+    @RequestMapping("/forgetPwd")
+    public R forgetPwd(String username, String newPwd, String checkCode)
     {
         User user = new User();
         user.setUsername(username);
         boolean b1 = userService.compareCheckCode(user, checkCode);
         if (b1)
         {
-            boolean b2 = userService.changePassword(username, oldPwd, newPwd);
+            boolean b2 = userService.changePassword(username, newPwd);
             if (b2) {
-                return new R(true, "密码更新成功，请重新登录!");
+                return new R(true, "成功找回密码，请重新登录!");
             }
             else {
-                System.out.println("密码错误，请重试!");
-                return new R(false, "密码错误，请重试!");
+                return new R(false, "该用户不存在!");
             }
         }else
             return new R(false, "验证码错误，请重新输入!");
     }
 
-    @RequestMapping("/getCheckCode")
-    public R sendCheckCode(String username, String password)
+    //注册验证码
+    @RequestMapping("/getRegisterCode")
+    public R sendRegisterCode(String username, String email)
     {
-        User user = new User(username, password);
-        //根据用户名密码查询用户完整信息
+        System.out.println("电子邮箱"+email);
+        System.out.println("用户名"+username);
+        User user = new User();
+        user.setUsername(username);
+        user.setEmail(email);
+        try
+        {
+            //生成验证码
+            String checkCode = CheckCodeGenerate.getCheckCode();
+            //保存到redis中
+            userService.saveCheckCode(user, checkCode);
+            //同时发送到用户邮箱
+            EmailService.sendEmail(user, checkCode, 1);
+        } catch (GeneralSecurityException e)
+        {
+            e.printStackTrace();
+            return new R(false, "请输入正确的电子邮箱!");
+        }
+        return new R(true, "验证码发送成功!");
+    }
+
+    //找回密码验证码
+    @RequestMapping("/getChangePwdCode")
+    public R sendChangePwdCode(String username)
+    {
+        User user = new User();
+        user.setUsername(username);
+        //根据用户名查询用户完整信息
         User userInfo = userService.getUserInfo(user);
         if (userInfo == null)
-            return new R(false, "用户名或密码错误");
+            return new R(false, "该用户不存在");
         try
         {
             //生成验证码
@@ -85,7 +119,7 @@ public class UserController
             //保存到redis中
             userService.saveCheckCode(userInfo, checkCode);
             //同时发送到用户邮箱
-            EmailService.sendEmail(userInfo, checkCode);
+            EmailService.sendEmail(userInfo, checkCode, 2);
         } catch (GeneralSecurityException e)
         {
             e.printStackTrace();

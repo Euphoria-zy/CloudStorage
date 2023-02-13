@@ -2,7 +2,7 @@
 <html  class="x-admin-sm">
 <head>
     <meta content="text/html" charset="UTF-8">
-    <title>修改密码页面</title>
+    <title>找回密码页面</title>
     <meta name="renderer" content="webkit|ie-comp|ie-stand">
     <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
     <meta name="viewport" content="width=device-width,user-scalable=yes, minimum-scale=0.4, initial-scale=0.8,target-densitydpi=low-dpi" />
@@ -14,6 +14,7 @@
     <script type="text/javascript" src="js/jquery-3.4.1.js"></script>
     <script src="layui/layui.js" charset="utf-8"></script>
     <script src="js/checkCode.js"></script>
+    <script src="js/dataCheck.js"></script>
     <style>
         #changePwd{
             float: right;
@@ -23,15 +24,18 @@
 <body class="login-bg">
 
 <div class="login layui-anim layui-anim-up">
-    <div class="message">修改密码</div>
+    <div class="message">找回密码</div>
     <div id="darkbannerwrap"></div>
 
     <form method="post" id="form_data" class="layui-form" >
         <input name="username" id="username" placeholder="用户名"  type="text" lay-verify="required" class="layui-input" >
-        <hr class="hr15">
-        <input name="oldPwd" id="oldPwd" lay-verify="required" placeholder="旧密码"  type="password" class="layui-input">
+        <span style="color: red" id="hint1"></span>
         <hr class="hr15">
         <input name="newPwd" id="newPwd" lay-verify="required" placeholder="新密码"  type="password" class="layui-input">
+        <span style="color: red" id="hint2"></span>
+        <hr class="hr15">
+        <input name="checkPwd" id="checkPwd" lay-verify="required" placeholder="确认密码"  type="password" class="layui-input">
+        <span style="color: red" id="hint3"></span>
         <hr class="hr15">
         <div class="layui-row">
             <div class="layui-col-md7">
@@ -42,52 +46,52 @@
             </div>
         </div>
         <hr class="hr15">
-        <input value="修改密码" lay-submit id="changePwd-btn" lay-filter="login" style="width:100%;" type="button">
+        <input value="找回密码" lay-submit id="changePwd-btn" lay-filter="login" style="width:100%;" type="button">
         <hr class="hr20" >
-
     </form>
 </div>
 
 <script>
     $(function (){
         $("#checkCode-btn").click(function() {
-            var checkBtn = document.getElementById("checkCode-btn");
-            var username = document.getElementById("username").value;
-            var oldPwd = document.getElementById("oldPwd").value;
-            checkBtn.disabled = 'disabled';
-            $.ajax({
-                type: "post",
-                url: "user/getCheckCode",
-                data:{"username":username,"password":oldPwd},
-                success: function (data)
-                {
-                    if (data.flag){
+            var check = checkForm3();
+            if (check){
+                alert("验证通过");
+                var username = document.getElementById("username").value;
+                var checkBtn = document.getElementById("checkCode-btn");
+                checkBtn.disabled = 'disabled';
+                $.ajax({
+                    type: "post",
+                    url: "user/getChangePwdCode",
+                    data:{"username":username},
+                    success: function (data)
+                    {
                         alert(data.msg);
-                        var time = 120;
-                        var timer = setInterval(function() {
-                            if (time == -1) {
-                                clearInterval(timer)
-                                checkBtn.disabled = '';
-                                checkBtn.value = '获取验证码';
-                            } else {
-                                checkBtn.value = time + '秒后重新获取';
-                                time--;
-                            }
-                        }, 1000);
-                    }else
-                        alert(data.msg);
-                }
-            });
+                        if (data.flag){
+                            var time = 120;
+                            var timer = setInterval(function() {
+                                if (time == -1) {
+                                    clearInterval(timer)
+                                    checkBtn.disabled = '';
+                                    checkBtn.value = '获取验证码';
+                                } else {
+                                    checkBtn.value = time + '秒后重新获取';
+                                    time--;
+                                }
+                            }, 1000);
+                        }
+                    }
+                });
+            }
         });
         $("#changePwd-btn").click(function () {
             var username = document.getElementById("username").value;
-            var oldPwd = document.getElementById("oldPwd").value;
             var newPwd = document.getElementById("newPwd").value;
             var checkCode = document.getElementById("input-val").value;
             $.ajax({
                 type: "post",
-                url: "user/changePwd",
-                data:{"username":username,"oldPwd":oldPwd,"newPwd":newPwd,"checkCode":checkCode},
+                url: "user/forgetPwd",
+                data:{"username":username, "newPwd":newPwd, "checkCode":checkCode},
                 success: function (data)
                 {
                     alert(data.msg);

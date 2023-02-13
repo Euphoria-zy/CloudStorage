@@ -1,10 +1,14 @@
-package com.tcb.cloudstorage.service;
+package com.tcb.cloudstorage.service.impl;
 
+import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
+import com.tcb.cloudstorage.domain.FileStore;
 import com.tcb.cloudstorage.domain.User;
 import com.tcb.cloudstorage.mapper.UserMapper;
+import com.tcb.cloudstorage.service.FileStoreService;
+import com.tcb.cloudstorage.service.UserService;
 import com.tcb.cloudstorage.utils.JedisUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -16,16 +20,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     @Autowired
     private UserMapper userMapper;
 
-    //登陆
-    @Override
-    public boolean login(User user)
-    {
-        User root = getUserInfo(user);
-        if (root != null)
-            return true;
-        else
-            return false;
-    }
+    @Autowired
+    private FileStoreService fileStoreService;
 
     //注册
     @Override
@@ -37,21 +33,28 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (root != null)
             return false;
         else {
-            userMapper.insert(user);
-            return true;
+            if (userMapper.insertUser(user) > 0){
+                //注册成功初始化文件仓库
+                FileStore fileStore = FileStore.builder().userId(user.getUserId()).currentSize(0).build();
+                fileStoreService.addFileStore(fileStore);
+                user.setFileStoreId(fileStore.getFileStoreId());
+                userMapper.update(user, lambdaQueryWrapper);
+                System.out.println("注册成功--用户文件仓库初始化成功："+fileStore.getFileStoreId());
+                return true;
+            }else
+                return false;
         }
     }
 
     //更改密码
     @Override
-    public boolean changePassword(String username, String oldPwd, String newPwd)
+    public boolean changePassword(String username, String newPwd)
     {
         LambdaQueryWrapper<User> lambdaQueryWrapper = new QueryWrapper<User>().lambda();
         lambdaQueryWrapper.eq(User::getUsername, username);
-        lambdaQueryWrapper.eq(User::getPassword, oldPwd);
         User root = userMapper.selectOne(lambdaQueryWrapper);
         if (root != null) {
-            User user = new User(username, newPwd);
+            User user = User.builder().userId(root.getUserId()).username(username).password(newPwd).build();
             userMapper.update(user, lambdaQueryWrapper);
             return true;
         }
@@ -66,8 +69,10 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         String code = jedisPool.get(key);
         if (code == "" || code == null) 
             return false;
-        else if (code.equals(checkCode))
+        else if (code.equals(checkCode)) {
+            jedisPool.del(key);
             return true;
+        }
         else 
             return false;
     }

@@ -9,11 +9,9 @@ import org.springframework.stereotype.Service;
 public interface UserService
 {
 
-    public boolean login(User user);
-
     public boolean register(User user);
 
-    public boolean changePassword(String username, String oldPwd, String newPwd);
+    public boolean changePassword(String username, String newPwd);
 
     public boolean compareCheckCode(User user, String checkCode);
 

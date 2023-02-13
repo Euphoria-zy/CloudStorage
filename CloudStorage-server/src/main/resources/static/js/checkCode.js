@@ -4,28 +4,11 @@ $(function(){
     $("#canvas").on('click',function(){
         draw(show_num);
     })
-    $(".layui-btn").on('click',function(){
-        var val = $("#input-val").val().toLowerCase();
-        var num = show_num.join("");
-        if(val==''){
-            alert('请输入验证码！');
-        }else if(val == num)
-        {
-            alert('提交成功！');
-            $("#input-val").val('');
-            draw(show_num);
-        }else
-        {
-            alert('验证码错误！请重新输入！');
-            $("#input-val").val('');
-            draw(show_num);
-        }
-    })
 })
 function draw(show_num)
 {
-    var canvas_width=$('#canvas').width();
-    var canvas_height=$('#canvas').height();
+    var canvas_width = $('#canvas').width();
+    var canvas_height = $('#canvas').height();
     var canvas = document.getElementById("canvas");//获取到canvas的对象，演员
     var context = canvas.getContext("2d");//获取到canvas画图的环境，演员表演的舞台
     canvas.width = canvas_width;
@@ -75,4 +58,24 @@ function randomColor()
     var g = Math.floor(Math.random() * 256);
     var b = Math.floor(Math.random() * 256);
     return "rgb(" + r + "," + g + "," + b + ")";
+}
+function checkCode(){
+    var val = $("#input-val").val().toLowerCase();
+    var hint3 = document.getElementById("hint3");
+    var num = show_num.join("");
+    if(val ==''){
+        hint3.innerHTML = '验证码不能为空！';
+        return false;
+    }else if(val == num)
+    {
+        $("#input-val").val('');
+        draw(show_num);
+        return true;
+    }else
+    {
+        hint3.innerHTML = '验证码错误！请重新输入！';
+        $("#input-val").val('');
+        draw(show_num);
+        return false;
+    }
 }

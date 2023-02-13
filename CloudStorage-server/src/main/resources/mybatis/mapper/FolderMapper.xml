@@ -1,0 +1,121 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tcb.cloudstorage.mapper.FolderMapper">
+
+    <resultMap id="BaseResultMap" type="com.tcb.cloudstorage.domain.Folder">
+        <!--@mbg.generated-->
+        <!--@Table file_folder-->
+        <id column="folder_id" jdbcType="INTEGER" property="folderId" />
+        <result column="folder_name" jdbcType="VARCHAR" property="folderName" />
+        <result column="parent_folder_id" jdbcType="INTEGER" property="parentFolderId" />
+        <result column="file_store_id" jdbcType="INTEGER" property="fileStoreId" />
+        <result column="folder_path" jdbcType="VARCHAR" property="folderPath" />
+        <result column="create_time" jdbcType="DATE" property="createTime" />
+    </resultMap>
+
+    <!--所有属性【文件夹id，文件夹名称，父文件夹id，文件仓库id，文件夹路径，创建时间】-->
+    <sql id="Base_Column_List_Folder">
+        folder_id, folder_name, parent_folder_id, file_store_id, create_time
+    </sql>
+
+    <!--添加属性sql-->
+    <sql id="Base_Insert_Key_List">
+        <if test="fileFolderName != null">
+            file_folder_name,
+        </if>
+        <if test="parentFolderId != null">
+            parent_folder_id,
+        </if>
+        <if test="fileStoreId != null">
+            file_store_id,
+        </if>
+        <if test="time != null">
+            time,
+        </if>
+    </sql>
+    <!--添加值sql-->
+    <sql id="Base_Insert_Value_List">
+        <if test="fileFolderName != null">
+            #{fileFolderName,jdbcType=VARCHAR},
+        </if>
+        <if test="parentFolderId != null">
+            #{parentFolderId,jdbcType=INTEGER},
+        </if>
+        <if test="fileStoreId != null">
+            #{fileStoreId,jdbcType=INTEGER},
+        </if>
+        <if test="time != null">
+            #{time},
+        </if>
+    </sql>
+    <!--修改sql-->
+    <sql id="Base_Update_List">
+        <if test="fileFolderName != null">
+            file_folder_name = #{fileFolderName,jdbcType=VARCHAR},
+        </if>
+        <if test="parentFolderId != null">
+            parent_folder_id = #{parentFolderId,jdbcType=INTEGER},
+        </if>
+        <if test="fileStoreId != null">
+            file_store_id = #{fileStoreId,jdbcType=INTEGER},
+        </if>
+    </sql>
+    <!--添加文件夹，返回主键-->
+    <insert id="addFolderReturnId" useGeneratedKeys="true" keyProperty="folderId">
+        insert into folder
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="folderName != null">
+                folder_name,
+            </if>
+            <if test="parentFolderId != null">
+                parent_folder_id,
+            </if>
+            <if test="fileStoreId != null">
+                file_store_id,
+            </if>
+            <if test="fileStoreId != null">
+                folder_path,
+            </if>
+            <if test="createTime != null">
+                create_time,
+            </if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="folderName != null">
+                #{folderName,jdbcType=VARCHAR},
+            </if>
+            <if test="parentFolderId != null">
+                #{parentFolderId,jdbcType=INTEGER},
+            </if>
+            <if test="fileStoreId != null">
+                #{fileStoreId,jdbcType=INTEGER},
+            </if>
+            <if test="folderPath != null">
+                #{folderPath,jdbcType=VARCHAR},
+            </if>
+            <if test="createTime != null">
+                #{createTime,jdbcType=TIMESTAMP},
+            </if>
+        </trim>
+    </insert>
+
+    <!--根据父文件夹id下的文件夹-->
+    <select id="getFolderByParentFolderId" parameterType="int" resultType="com.tcb.cloudstorage.domain.Folder">
+        select
+        <include refid="Base_Column_List_Folder" />
+        from folder
+        where parent_folder_id = #{parentFolderId,jdbcType=INTEGER};
+    </select>
+
+    <!--获取根目录下的文件夹-->
+    <select id="getRootFolderByFileStoreId" parameterType="int" resultType="com.tcb.cloudstorage.domain.Folder">
+        select
+        <include refid="Base_Column_List_Folder" />
+        from folder
+        where file_store_id = #{fileStoreId,jdbcType=INTEGER} and parent_folder_id = 0;
+    </select>
+    <select id="getFileStoreInfoOfFolder" resultType="java.lang.Integer">
+        select count(*) from folder where file_store_id = #{id}
+    </select>
+
+</mapper>

@@ -1,0 +1,125 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tcb.cloudstorage.mapper.FileMapper">
+
+    <resultMap id="BaseResultMap" type="com.tcb.cloudstorage.domain.UserFile">
+        <id column="file_id" jdbcType="INTEGER" property="fileId" />
+        <result column="file_name" jdbcType="VARCHAR" property="fileName" />
+        <result column="file_type" jdbcType="INTEGER" property="fileType" />
+        <result column="file_store_id" jdbcType="INTEGER" property="fileStoreId" />
+        <result column="file_path" jdbcType="VARCHAR" property="filePath" />
+        <result column="download_count" jdbcType="INTEGER" property="downloadCount" />
+        <result column="upload_time" jdbcType="TIMESTAMP" property="uploadTime" />
+        <result column="file_size" jdbcType="INTEGER" property="fileSize" />
+        <result column="postfix" jdbcType="VARCHAR" property="postfix" />
+        <result column="parent_folder_id" jdbcType="INTEGER" property="parentFolderId" />
+    </resultMap>
+
+    <!--文件所有属性-->
+    <sql id="Base_Column_List">
+        file_id, file_name, file_type, file_store_id, file_path, download_count, upload_time,
+    parent_folder_id, file_size, postfix
+    </sql>
+    <!--添加属性sql-->
+    <sql id="Base_Insert_Key_List">
+        <if test="myFileName != null">
+            my_file_name,
+        </if>
+        <if test="fileStoreId != null">
+            file_store_id,
+        </if>
+        <if test="myFilePath != null">
+            my_file_path,
+        </if>
+        <if test="downloadTime != null">
+            download_time,
+        </if>
+        <if test="uploadTime != null">
+            upload_time,
+        </if>
+        <if test="parentFolderId != null">
+            parent_folder_id,
+        </if>
+        <if test="size != null">
+            size,
+        </if>
+        <if test="type != null">
+            type,
+        </if>
+        <if test="postfix != null">
+            postfix,
+        </if>
+    </sql>
+    <!--添加值sql-->
+    <sql id="Base_Insert_Value_List">
+        <if test="myFileName != null">
+            #{myFileName,jdbcType=VARCHAR},
+        </if>
+        <if test="fileStoreId != null">
+            #{fileStoreId,jdbcType=INTEGER},
+        </if>
+        <if test="myFilePath != null">
+            #{myFilePath,jdbcType=VARCHAR},
+        </if>
+        <if test="downloadTime != null">
+            #{downloadTime,jdbcType=INTEGER},
+        </if>
+        <if test="uploadTime != null">
+            #{uploadTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="parentFolderId != null">
+            #{parentFolderId,jdbcType=INTEGER},
+        </if>
+        <if test="size != null">
+            #{size},
+        </if>
+        <if test="type != null">
+            #{type},
+        </if>
+        <if test="postfix != null">
+            #{postfix},
+        </if>
+    </sql>
+    <!--修改sql-->
+    <sql id="Base_Update_List">
+        <if test="myFileName != null">
+            my_file_name = #{myFileName,jdbcType=VARCHAR},
+        </if>
+        <if test="downloadTime != null">
+            download_time = #{downloadTime,jdbcType=INTEGER},
+        </if>
+        <if test="uploadTime != null">
+            upload_time = #{uploadTime,jdbcType=TIMESTAMP},
+        </if>
+        <if test="parentFolderId != null">
+            parent_folder_id = #{parentFolderId,jdbcType=INTEGER},
+        </if>
+        <if test="size != null">
+            size = #{size},
+        </if>
+        <if test="type != null">
+            type = #{type},
+        </if>
+    </sql>
+
+    <!--根据文件夹id获取下面文件-->
+    <select id="getUserFileByFolderId" parameterType="int" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from user_file
+        where parent_folder_id = #{parentFolderId,jdbcType=INTEGER};
+    </select>
+
+    <!--根据文件仓库id获取根目录下的文件-->
+    <select id="getRootFileByFileStoreId" parameterType="int" resultMap="BaseResultMap">
+        select
+        <include refid="Base_Column_List"/>
+        from user_file
+        where file_store_id = #{fileStoreId,jdbcType=INTEGER} and parent_folder_id = 0;
+    </select>
+    <select id="getFileStoreInfoOfFile" resultType="com.tcb.cloudstorage.domain.FileStoreInfo">
+        select sum(file_type = 1) doc,sum(file_type = 2) image,sum(file_type = 3) video,
+               sum(file_type = 4) music,sum(file_type = 5) other,count(*) file_count from user_file
+        where file_store_id = #{id}
+    </select>
+</mapper>
