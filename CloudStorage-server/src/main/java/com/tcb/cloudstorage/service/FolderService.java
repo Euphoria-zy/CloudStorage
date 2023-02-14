@@ -15,6 +15,13 @@ public interface FolderService
     public int addFolder(Folder folder);
 
     /**
+     * @Description 更新文件夹
+     * @param folder
+     * @return
+     */
+    public boolean updateFolder(Folder folder);
+
+    /**
      * @Description 根据id删除文件夹
      * @param folderId
      * @return

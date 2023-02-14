@@ -39,6 +39,17 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
     }
 
     /**
+     * @Description 更新文件夹信息
+     * @param folder
+     * @return
+     */
+    @Override
+    public boolean updateFolder(Folder folder)
+    {
+        return folderMapper.updateById(folder)>0;
+    }
+
+    /**
      * @Description 根据id删除文件夹
      * @param folderId
      * @return

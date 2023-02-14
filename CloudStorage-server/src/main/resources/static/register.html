@@ -65,7 +65,6 @@
                     data:{"username":username,"email":email},
                     success: function (data)
                     {
-                        alert(data.msg);
                         if (data.flag){
                             var time = 120;
                             var timer = setInterval(function() {
@@ -94,7 +93,6 @@
                 data:{"username":username,"password":password,"email":email,"checkCode":checkCode},
                 success: function (data)
                 {
-                    alert(data.msg);
                     if(data.flag == true) {
                         location.href = "login.html";
                     }

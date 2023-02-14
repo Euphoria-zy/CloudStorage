@@ -61,7 +61,6 @@
         $("#login-btn").click(function () {
             var check = checkForm1();
             if (check){
-                alert("表单验证通过");
                 var user = $("#form_data").serialize();
                 $.ajax({
                     type: "post",
@@ -69,7 +68,6 @@
                     data:user,
                     success: function (data)
                     {
-                        alert(data.msg);
                         if(data.flag == true) {
                             location.href = "index.html";
                         }

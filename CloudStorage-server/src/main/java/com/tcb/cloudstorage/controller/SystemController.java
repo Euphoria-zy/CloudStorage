@@ -52,8 +52,6 @@ public class SystemController extends BaseController
         Folder nowFolder = null;
         //当前文件夹的相对路径
         List<Folder> route = new ArrayList<>();
-        //冗余代码，重复获取
-        User loginUser = (User) session.getAttribute("loginUser");
         if (folderId == null || folderId <= 0) {
             //代表当前为根目录
             folderId = 0;
@@ -63,9 +61,6 @@ public class SystemController extends BaseController
         } else {
             //当前为具体目录,访问的文件夹不是当前登录用户所创建的文件夹
             Folder folder = folderService.getFolderById(folderId);
-            System.out.println(folderId);
-            System.out.println(folder.getFolderName());
-            System.out.println(loginUser.getFileStoreId());
             if (folder.getFileStoreId() - loginUser.getFileStoreId() != 0){
                 return new R(false,"无访问权限");
             }
