@@ -25,6 +25,7 @@
     <script src="bootstrap-fileinput/js/locales/zh.js"></script>
     <!-- import Vue before Element -->
     <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
+    <script src="//unpkg.com/@element-plus/icons-vue"></script>
     <!-- import JavaScript -->
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
     <script src="./js/axios-0.18.0.js"></script>
@@ -84,8 +85,13 @@
                 label="文件/文件夹"
                 width="120">
             <template slot-scope="scope">
-                <p v-if="scope.row.file">文件</p>
-                <p v-else>文件夹</p>
+                <el-tag
+                        :type="
+                        scope.row.file ? 'success' :
+                        'primary'" disable-transitions>
+                    <p v-if="scope.row.file">文件</p>
+                    <p v-else>文件夹</p>
+                </el-tag>
             </template>
         </el-table-column>
         <el-table-column
@@ -96,8 +102,13 @@
                 width="240"
                 label="操作结果" >
             <template slot-scope="scope">
-                <p v-if="scope.row.operationSuccess">操作成功</p>
-                <p v-else>操作失败</p>
+                <el-tag
+                        :type="
+                        scope.row.operationSuccess ? 'success' :
+                        'warning'" disable-transitions>
+                    <p v-if="scope.row.operationSuccess">操作成功</p>
+                    <p v-else>操作失败</p>
+                </el-tag>
             </template>
         </el-table-column>
     </el-table>
