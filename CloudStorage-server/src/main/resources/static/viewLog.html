@@ -25,7 +25,6 @@
     <script src="bootstrap-fileinput/js/locales/zh.js"></script>
     <!-- import Vue before Element -->
     <script src="https://unpkg.com/vue@2/dist/vue.js"></script>
-    <script src="//unpkg.com/@element-plus/icons-vue"></script>
     <!-- import JavaScript -->
     <script src="https://unpkg.com/element-ui/lib/index.js"></script>
     <script src="./js/axios-0.18.0.js"></script>
@@ -44,7 +43,7 @@
 </div>
 <div id="logTable">
     <el-table
-            :data="tableData.filter(data => !search || data.fileId.toLowerCase().includes(search.toLowerCase()))"
+            :data="tableData.filter(data => !search || data.fileFolderName.toLowerCase().includes(search.toLowerCase()))"
             style="width: 100%">
         <el-table-column
                 prop="formatTime"
@@ -85,13 +84,8 @@
                 label="文件/文件夹"
                 width="120">
             <template slot-scope="scope">
-                <el-tag
-                        :type="
-                        scope.row.file ? 'success' :
-                        'primary'" disable-transitions>
-                    <p v-if="scope.row.file">文件</p>
-                    <p v-else>文件夹</p>
-                </el-tag>
+                <i v-if="scope.row.file"><i class="el-icon-folder"></i>&nbsp;文件</i>
+                <i v-else><i class="el-icon-folder-opened"></i>&nbsp;文件夹</i>
             </template>
         </el-table-column>
         <el-table-column
@@ -100,11 +94,18 @@
         </el-table-column>
         <el-table-column
                 width="240"
-                label="操作结果" >
+                label="操作结果"
+                align="center">
+            <template slot="header" slot-scope="scope">
+                <el-input
+                        v-model="search"
+                        size="mini"
+                        placeholder="输入关键字搜索"/>
+            </template>
             <template slot-scope="scope">
                 <el-tag
                         :type="
-                        scope.row.operationSuccess ? 'success' :
+                        scope.row.operationSuccess ?'info' :
                         'warning'" disable-transitions>
                     <p v-if="scope.row.operationSuccess">操作成功</p>
                     <p v-else>操作失败</p>
