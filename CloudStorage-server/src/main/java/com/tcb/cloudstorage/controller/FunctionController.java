@@ -71,7 +71,7 @@ public class FunctionController extends BaseController
         }
         for (int i = 0; i < userFiles.size(); i++) {
             if ((userFiles.get(i).getFileName()+userFiles.get(i).getPostfix()).equals(name)){
-                return new R(false, "当前文件已存在!上传失败");
+                return new R(false, "文件上传失败，当前目录已存在同名文件: "+name);
             }
         }
         //上传时间
@@ -171,7 +171,7 @@ public class FunctionController extends BaseController
             String[] fileFolder = filePath.split("/");
             firstFolderName = fileFolder[0];
             if (folderService.getFolderByPIdAndName(nowFolderId, firstFolderName) != null){
-                return new R(false, "上传文件夹失败! 文件夹: "+firstFolderName+"已存在!");
+                return new R(false, "上传文件夹失败! 当前目录已存在同名文件夹: "+firstFolderName);
             }
         }
         for (MultipartFile f: file)
@@ -317,7 +317,7 @@ public class FunctionController extends BaseController
             folderPath = parentFolder.getFolderPath() +parentFolder.getFolderName() +"/";
         }
         if (folderService.getFolderByPIdAndName(parentFolderId, folderName) != null){
-            return new R(false, "添加文件夹失败!文件夹已存在!");
+            return new R(false, "添加文件夹失败!当前目录已存在同名文件夹: "+folderName);
         }
         Folder newFolder = Folder.builder()
                 .folderName(folderName)
@@ -349,7 +349,7 @@ public class FunctionController extends BaseController
         //判断文件名是否冲突
         boolean b1 = fileService.isFileRepeat(parentFolderId, name, postfix);
         if (b1){
-            return new R(false, "重命名失败，当前文件: "+newFileName+"已存在!");
+            return new R(false, "重命名失败，当前目录已存在同名文件: "+newFileName);
         }
         UserFile userFile = fileService.getFileByFileId(fileId);
         if ((userFile.getFileName()+userFile.getPostfix()).equals(newFileName))
@@ -387,7 +387,7 @@ public class FunctionController extends BaseController
         Folder folder = folderService.getFolderById(folderId);
         Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, newFolderName);
         if (folderByPIdAndName != null){
-            return new R(false, "重命名失败，当前文件夹: "+newFolderName+"已存在!");
+            return new R(false, "重命名失败，当前目录已存在同名文件夹: "+newFolderName);
         }else {
             folder.setFolderName(newFolderName);
             boolean b1 = folderService.updateFolder(folder);
@@ -522,7 +522,14 @@ public class FunctionController extends BaseController
         return new R(true, "文件夹列表加载成功!", map);
     }
 
-    @RequestMapping("/copyFolderOrFile")
+    /**
+     * @Description
+     * @param operateId
+     * @param operateType
+     * @param parentFolderId
+     * @return
+     */
+    @RequestMapping("/copyFileOrFolder")
     public R copyFolderOrFile(@RequestParam int operateId, @RequestParam int operateType, @RequestParam int parentFolderId)
     {
 
@@ -551,13 +558,13 @@ public class FunctionController extends BaseController
                 copyFolder(newFolder,oldFolder,store);
                 return new R(true, "复制文件夹成功!");
             }else {
-                return new R(false, "复制失败，文件夹已存在!");
+                return new R(false, "复制失败，当前目录已存在同名文件夹!");
             }
         }else {
             UserFile userFile = fileService.getFileByFileId(operateId);
             boolean fileRepeat = fileService.isFileRepeat(parentFolderId, userFile.getFileName(), userFile.getPostfix());
             if (fileRepeat) {
-                return new R(true, "复制失败，文件已存在!");
+                return new R(true, "复制文件失败，当前目录已存在同名文件!");
             }else {
                 UserFile file = UserFile.builder().fileName(userFile.getFileName())
                         .fileStoreId(userFile.getFileStoreId()).fileSize(userFile.getFileSize())
@@ -616,5 +623,80 @@ public class FunctionController extends BaseController
            folderService.addFolderReturnFolderId(folder1);
            copyFolder(folder1,folder,store);
        }
+    }
+
+    @RequestMapping("/moveFileOrFolder")
+    public R moveFileOrFolder(@RequestParam int operateId, @RequestParam int operateType, @RequestParam int parentFolderId)
+    {
+        String folderPath = null;
+        if (parentFolderId != 0){
+            Folder parentFolder = folderService.getFolderById(parentFolderId);
+            folderPath = parentFolder.getFolderPath()+parentFolder.getFolderName()+"/";
+        }else{
+            folderPath = loginUser.getUsername()+"/";
+        }
+
+        if (operateType == 1){
+            //移动文件夹
+            Folder nowFolder = folderService.getFolderById(operateId);
+            Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, nowFolder.getFolderName());
+            if (folderByPIdAndName != null)
+                return new R(false, "移动失败，当前目录已存在同名文件夹!");
+            nowFolder.setParentFolderId(parentFolderId);
+            nowFolder.setFolderPath(folderPath);
+            folderService.updateFolder(nowFolder);
+            moveFolder(nowFolder);
+            return new R(true, "移动文件夹成功!");
+        }else {
+            //移动文件
+            UserFile userFile = fileService.getFileByFileId(operateId);
+            boolean fileRepeat = fileService.isFileRepeat(parentFolderId, userFile.getFileName(), userFile.getPostfix());
+            if (fileRepeat)
+                return new R(false, "移动文件失败,当前目录已存在同名文件夹!");
+            String sourceKey = userFile.getFilePath()+userFile.getFileName()+userFile.getPostfix();
+            String destinationKey = folderPath+userFile.getFileName()+userFile.getPostfix();
+            boolean b1 = COSUtils.copyFile(sourceKey, destinationKey);
+            if (b1) {
+                boolean b2 = COSUtils.deleteFile(sourceKey);
+                if (b2) {
+                    userFile.setParentFolderId(parentFolderId);
+                    boolean b3 = fileService.updateUserFileById(userFile);
+                    if (b3) {
+                        return new R(true, "移动文件: "+userFile.getFileName()+"成功!");
+                    }else
+                        return new R(false, "移动文件: "+userFile.getFileName()+"失败!数据库写入文件数据失败!");
+                }else
+                    return new R(false, "删除源文件失败!");
+            }else
+                return new R(false, "复制源文件失败!");
+        }
+    }
+
+    /**
+     * @Description 级联更新parentFolder下所有文件的folderPath
+     * @param parentFolder
+     */
+    public void moveFolder(Folder parentFolder)
+    {
+        List<UserFile> userFileList = fileService.getUserFileByParentFolderId(parentFolder.getFolderId());
+        for (UserFile file: userFileList){
+            String sourceKey = file.getFilePath()+file.getFileName()+file.getPostfix();
+            String destinationKey = parentFolder.getFolderPath()+parentFolder.getFolderName()+"/"+file.getFileName()+file.getPostfix();
+            boolean b1 = COSUtils.copyFile(sourceKey, destinationKey);
+            if (b1) {
+                boolean b2 = COSUtils.deleteFile(sourceKey);
+                if (b2) {
+                    file.setFilePath(parentFolder.getFolderPath()+parentFolder.getFolderName()+"/");
+                    fileService.updateUserFileById(file);
+                }
+            }
+        }
+        List<Folder> folderList = folderService.getFolderByParentFolderId(parentFolder.getFolderId());
+        for (Folder folder: folderList){
+            folder.setParentFolderId(parentFolder.getParentFolderId());
+            folder.setFolderPath(parentFolder.getFolderPath()+parentFolder.getFolderName()+"/");
+            folderService.updateFolder(folder);
+            moveFolder(folder);
+        }
     }
 }

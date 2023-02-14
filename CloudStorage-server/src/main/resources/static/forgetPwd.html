@@ -56,7 +56,6 @@
         $("#checkCode-btn").click(function() {
             var check = checkForm3();
             if (check){
-                alert("验证通过");
                 var username = document.getElementById("username").value;
                 var checkBtn = document.getElementById("checkCode-btn");
                 checkBtn.disabled = 'disabled';
@@ -66,7 +65,6 @@
                     data:{"username":username},
                     success: function (data)
                     {
-                        alert(data.msg);
                         if (data.flag){
                             var time = 120;
                             var timer = setInterval(function() {
@@ -94,7 +92,6 @@
                 data:{"username":username, "newPwd":newPwd, "checkCode":checkCode},
                 success: function (data)
                 {
-                    alert(data.msg);
                     if(data.flag == true) {
                         location.href = "login.html";
                     }
