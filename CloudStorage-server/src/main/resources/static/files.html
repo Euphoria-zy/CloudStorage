@@ -149,7 +149,7 @@
                 </el-table-column>
                 <el-table-column
                         label="操作"
-                        width="200">
+                        width="300">
                     <template slot-scope="scope">
                         <el-row>
                             <el-tooltip class="item" effect="light" content="下载" placement="bottom-start">
@@ -163,6 +163,12 @@
                             </el-tooltip>
                             <el-tooltip class="item" effect="light" content="重命名" placement="bottom-start">
                                 <el-button type="primary" size="mini" icon="el-icon-edit" circle @click="handleEdit(scope.row)"></el-button>
+                            </el-tooltip>
+                            <el-tooltip class="item" effect="light" content="复制" placement="bottom-start">
+                                <el-button type="text" size="mini" icon="el-icon-document-copy" circle @click="handleCopy(scope.row)"></el-button>
+                            </el-tooltip>
+                            <el-tooltip class="item" effect="light" content="移动" placement="bottom-start">
+                                <el-button type="warning" size="mini" icon="el-icon-rank" circle @click="handleMove(scope.row)"></el-button>
                             </el-tooltip>
                         </el-row>
                     </template>
@@ -181,12 +187,45 @@
                         </el-form-item>
                     </el-form>
                     <div slot="footer" class="dialog-footer">
-                        <el-button @click="addFolderFormVisible = false">取 消</el-button>
-                        <el-button type="primary" @click="addFolder()">确 定</el-button>
+                        <el-button @click="addFolderFormVisible = false" round>取 消</el-button>
+                        <el-button type="primary" @click="addFolder()"round>确 定</el-button>
                     </div>
                 </el-dialog>
             </div>
 
+            <!--移动文件或文件夹dialog-->
+            <div id="copyFolderOrFileDialog">
+                <el-dialog title="复制到" :visible.sync="copyDialogTableVisible">
+                    <!--导航面包屑-->
+                    <el-breadcrumb separator-class="el-icon-arrow-right">
+                        <transition-group>
+                            <el-breadcrumb-item :key="0">
+                                <a @click.prevent="enterFolder(0)">根目录</a>
+                            </el-breadcrumb-item>
+                            <el-breadcrumb-item v-for="(item,index) in folderLevel" :key="item.folderId">
+                                <a @click.prevent="enterFolder(item.folderId)">{{ item.folderName }}</a>
+                            </el-breadcrumb-item>
+                            <el-breadcrumb-item v-if="nowCopyFolder.folderId != 0" :key="nowCopyFolder.folderId">
+                                <a @click.prevent="enterFolder(nowCopyFolder.folderId)">{{ nowCopyFolder.folderName }}</a>
+                            </el-breadcrumb-item>
+                        </transition-group>
+                        <el-breadcrumb-item v-if="nowCopyFolder.folderId != 0">
+                            <a @click.prevent="enterFolder(nowCopyFolder.parentFolderId)">&nbsp;&nbsp;|&nbsp;返回上一级</a>
+                        </el-breadcrumb-item>
+                    </el-breadcrumb>
+                    <el-divider></el-divider>
+                    <el-table :data="folderData" :show-header="false" @row-dblclick="handleDblClick">
+                        <el-table-column label="图标" width="80">
+                            <i class="el-icon-folder"></i>
+                        </el-table-column>
+                        <el-table-column property="folderName" label="文件名" width="80"></el-table-column>
+                    </el-table>
+                    <div slot="footer" class="dialog-footer">
+                        <el-button @click="copyDialogTableVisible = false" round>取 消</el-button>
+                        <el-button type="primary" @click="copyFolderOrFolder(nowCopyFolder.folderId)" round>复制到此处</el-button>
+                    </div>
+                </el-dialog>
+            </div>
         </el-main>
     </el-container>
 </div>
@@ -207,9 +246,14 @@
                     createTime: null
                 },
                 addFolderFormVisible: false,
-                deleteFileDialogVisible: false,
+                copyDialogTableVisible: false,
                 newFolderName: '',
                 nowFolderId: null,
+                folderData: [],
+                folderLevel: [],
+                nowCopyFolder: {},
+                copyAndMoveId: null,
+                operateType: null
             }
         },
         created(){
@@ -326,6 +370,9 @@
                 {
                     console.log("双击预览文件");
                 }
+            },
+            handleDblClick(row){
+                this.enterFolder(row.folderId);
             },
             toggleSelection(rows) {
                 if (rows) {
@@ -498,6 +545,57 @@
                         this.$message.error(res.data.msg);
                     }
                 });
+            },
+            //复制文件或文件夹
+            handleCopy(row){
+                this.copyDialogTableVisible = true;
+                if (row.fileType == null){
+                    //移动文件夹
+                    this.copyAndMoveId = row.folderId;
+                    this.operateType = 1;
+                }else {
+                    //移动文件
+                    this.copyAndMoveId = row.fileId;
+                    this.operateType = 2;
+                }
+                this.enterFolder(0);
+            },
+            enterFolder(nowFolderId){
+                //发送异步post请求
+                var params = new URLSearchParams();
+                params.append("nowFolderId",nowFolderId);
+                axios.post("/getFolder",params).then((res)=>{
+                    if (res.data.flag){
+                        this.$message({message: res.data.msg, type:"success"});
+                        this.folderData = res.data.data.folderData;
+                        this.nowCopyFolder = res.data.data.nowFolder;
+                        this.folderLevel = res.data.data.location;
+                    }else{
+                        this.$message.error(res.data.msg);
+                    }
+                });
+            },
+            copyFolderOrFolder(parentFolderId){
+                //发送异步post请求
+                this.copyDialogTableVisible = false;
+                var params = new URLSearchParams();
+                params.append("operateType",this.operateType);
+                params.append("operateId", this.copyAndMoveId);
+                params.append("parentFolderId", parentFolderId);
+                axios.post("/copyFolderOrFile",params).then((res)=>{
+                    if (res.data.flag){
+                        this.$message({message: res.data.msg, type:"success"});
+                        this.folderData = res.data.data.folderData;
+                        this.nowCopyFolder = res.data.data.nowFolder;
+                        this.folderLevel = res.data.data.location;
+                    }else{
+                        this.$message.error(res.data.msg);
+                    }
+                });
+            },
+            //移动文件或文件夹
+            handleMove(row){
+
             }
         }
     });

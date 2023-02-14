@@ -244,6 +244,7 @@ public class FunctionController extends BaseController
                                 fileSize(Integer.valueOf(fileSize)).fileType(type).postfix(postfix).build());
                 //更新仓库表的当前大小
                 fileStoreService.addFileStoreSize(store.getFileStoreId(), store.getCurrentSize()+Integer.valueOf(fileSize));
+                store = fileStoreService.getFileStoreById(store.getFileStoreId());
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
@@ -455,6 +456,7 @@ public class FunctionController extends BaseController
         List<Folder> folders = folderService.getFolderByParentFolderId(folder.getFolderId());
         //删除文件夹下的所有文件
         List<UserFile> files = fileService.getUserFileByParentFolderId(folder.getFolderId());
+        int count = files.size();
         boolean b1, b2;
         b1 = b2 = true;
         for (UserFile file: files){
@@ -463,6 +465,7 @@ public class FunctionController extends BaseController
             String postfix = file.getPostfix();
             b1 = COSUtils.deleteFile(filePath + name + postfix);
             if (b1){
+                count--;
                 b2 = fileService.deleteFileById(file.getFileId());
                 if (b2){
                     fileStoreService.subFileStoreSize(store.getFileStoreId(), store.getCurrentSize()- file.getFileSize());
@@ -481,8 +484,137 @@ public class FunctionController extends BaseController
             deepDeleteFolder(childFolder);
         }
         //在成功删除当前文件夹中的文件的情况下，再删除文件夹
-        if (b1)
+        if (count == 0)
             folderService.deleteFolder(folder.getFolderId());
     }
 
+    /**
+     * @Description 获取文件夹列表
+     * @param nowFolderId
+     * @return
+     */
+    @RequestMapping("/getFolder")
+    public R getFolder(@RequestParam Integer nowFolderId)
+    {
+        List<Folder> folderList = null;
+        Folder nowFolder = null;
+        List<Folder> route = new ArrayList<>();
+        if (nowFolderId <= 0 || nowFolderId == null){
+            nowFolderId = 0;
+            folderList = folderService.getFolderByParentFolderId(nowFolderId);
+            nowFolder = Folder.builder().folderId(nowFolderId).fileStoreId(loginUser.getFileStoreId()).build();
+        }else {
+            folderList = folderService.getFolderByParentFolderId(nowFolderId);
+            nowFolder = folderService.getFolderById(nowFolderId);
+            //遍历查询当前目录
+            Folder temp = nowFolder;
+            //获取中间路径
+            while (temp.getParentFolderId() != 0) {
+                temp = folderService.getFolderById(temp.getParentFolderId());
+                route.add(temp);
+            }
+        }
+        Collections.reverse(route);
+        Map<String, Object> map = new HashMap<>();
+        map.put("folderData", folderList);
+        map.put("location", route);
+        map.put("nowFolder", nowFolder);
+        return new R(true, "文件夹列表加载成功!", map);
+    }
+
+    @RequestMapping("/copyFolderOrFile")
+    public R copyFolderOrFile(@RequestParam int operateId, @RequestParam int operateType, @RequestParam int parentFolderId)
+    {
+
+        String folderPath;
+        FileStore store = fileStoreService.getFileStoreById(loginUser.getFileStoreId());
+        if (parentFolderId != 0) {
+            Folder parentFolder = folderService.getFolderById(parentFolderId);
+            folderPath = parentFolder.getFolderPath()+parentFolder.getFolderName()+"/";
+        }else {
+            //根目录
+            folderPath = loginUser.getUsername()+"/";
+        }
+        //复制文件夹
+        if (operateType == 1) {
+            Folder oldFolder = folderService.getFolderById(operateId);
+            Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, oldFolder.getFolderName());
+            if (folderByPIdAndName == null){
+                Folder newFolder = Folder.builder()
+                        .folderName(oldFolder.getFolderName())
+                        .fileStoreId(oldFolder.getFileStoreId())
+                        .parentFolderId(parentFolderId)
+                        .folderPath(folderPath)
+                        .createTime(new Date()).build();
+                folderService.addFolderReturnFolderId(newFolder);
+                //更新文件夹下面的文件信息
+                copyFolder(newFolder,oldFolder,store);
+                return new R(true, "复制文件夹成功!");
+            }else {
+                return new R(false, "复制失败，文件夹已存在!");
+            }
+        }else {
+            UserFile userFile = fileService.getFileByFileId(operateId);
+            boolean fileRepeat = fileService.isFileRepeat(parentFolderId, userFile.getFileName(), userFile.getPostfix());
+            if (fileRepeat) {
+                return new R(true, "复制失败，文件已存在!");
+            }else {
+                UserFile file = UserFile.builder().fileName(userFile.getFileName())
+                        .fileStoreId(userFile.getFileStoreId()).fileSize(userFile.getFileSize())
+                        .fileType(userFile.getFileType()).filePath(folderPath)
+                        .parentFolderId(parentFolderId).uploadTime(new Date())
+                        .downloadCount(0).postfix(userFile.getPostfix()).build();
+                String sourceKey = userFile.getFilePath()+userFile.getFileName()+userFile.getPostfix();
+                String destinationKey = file.getFilePath()+file.getFileName()+file.getPostfix();
+                boolean b1 = COSUtils.copyFile(sourceKey, destinationKey);
+                if (b1) {
+                    boolean b2 = fileService.addUserFile(file);
+                    fileStoreService.addFileStoreSize(store.getFileStoreId(), store.getCurrentSize()+file.getFileSize());
+                    store = fileStoreService.getFileStoreById(store.getFileStoreId());
+                    if (b2) {
+                        return new R(true, "复制文件成功!");
+                    }else {
+                        return new R(false, "复制文件信息到数据库失败!");
+                    }
+                }else {
+                    return new R(false, "复制文件信息失败!");
+                }
+            }
+        }
+    }
+    //把oldFolder下的文件拷贝到newFolder
+    public void copyFolder(Folder newFolder, Folder oldFolder, FileStore store)
+    {
+        //拷贝文件
+       List<UserFile> files = fileService.getUserFileByParentFolderId(oldFolder.getFolderId());
+       for (UserFile file: files){
+           UserFile userFile = UserFile.builder().fileName(file.getFileName())
+                   .fileStoreId(file.getFileStoreId()).fileSize(file.getFileSize())
+                   .fileType(file.getFileType()).filePath(newFolder.getFolderPath()+newFolder.getFolderName()+"/")
+                   .parentFolderId(newFolder.getFolderId()).uploadTime(new Date())
+                   .downloadCount(0).postfix(file.getPostfix()).build();
+           String sourceKey = file.getFilePath()+file.getFileName()+file.getPostfix();
+           String destinationKey = userFile.getFilePath()+userFile.getFileName()+userFile.getPostfix();
+           boolean b1 = COSUtils.copyFile(sourceKey, destinationKey);
+           if (b1){
+               boolean b2 = fileService.addUserFile(userFile);
+               if (b2) {
+                   fileStoreService.addFileStoreSize(store.getFileStoreId(), store.getCurrentSize()+userFile.getFileSize());
+                   store = fileStoreService.getFileStoreById(store.getFileStoreId());
+               }
+           }
+       }
+       //拷贝文件夹
+       List<Folder> folderList = folderService.getFolderByParentFolderId(oldFolder.getFolderId());
+       for (Folder folder: folderList){
+           Folder folder1 = Folder.builder()
+                   .folderName(folder.getFolderName())
+                   .fileStoreId(folder.getFileStoreId())
+                   .parentFolderId(newFolder.getFolderId())
+                   .folderPath(newFolder.getFolderPath()+newFolder.getFolderName()+"/")
+                   .createTime(new Date()).build();
+           folderService.addFolderReturnFolderId(folder1);
+           copyFolder(folder1,folder,store);
+       }
+    }
 }
