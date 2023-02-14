@@ -39,7 +39,7 @@ public class COSUtils
     {
         //创建COSClient对象
         RestTemplate restTemplate = new RestTemplate();
-        Map forObject = restTemplate.getForObject("http://localhost:8085/getSecretKey", Map.class);
+        Map forObject = restTemplate.getForObject("http://43.138.22.212:8085/getSecretKey", Map.class);
         SECRETID = (String) forObject.get("SecretId");
         SECRETKEY = (String) forObject.get("SecretKey");
         SESSION_TOKEN = (String) forObject.get("sessionToken");
