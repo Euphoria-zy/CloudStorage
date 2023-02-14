@@ -3,7 +3,7 @@ package com.tcb.cloudstorage.utils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.Headers;
-import com.qcloud.cos.auth.BasicCOSCredentials;
+import com.qcloud.cos.auth.BasicSessionCredentials;
 import com.qcloud.cos.auth.COSCredentials;
 import com.qcloud.cos.exception.CosClientException;
 import com.qcloud.cos.exception.CosServiceException;
@@ -13,11 +13,13 @@ import com.qcloud.cos.model.*;
 import com.qcloud.cos.region.Region;
 import com.qcloud.cos.transfer.*;
 import com.qcloud.cos.utils.DateUtils;
+import org.springframework.web.client.RestTemplate;
 import org.springframework.web.multipart.MultipartFile;
 
 import java.io.File;
 import java.net.URL;
 import java.util.Date;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
@@ -27,14 +29,20 @@ public class COSUtils
     public static String BUCKET_NAME = "examplebucket";
     public static String APP_ID = "1311199809";
 
-    private static String SECRETID = "AKIDEKTYfbIkz1pCLI2WlFXdVAdsdAUbU8Yj";
-    private static String SECRETKEY = "4tTpxBByYv43qRpzvqY3MRI196oSt8Ay";
+    private static String SECRETID;
+    private static String SECRETKEY;
+    private static String SESSION_TOKEN;
     private static String COS_REGION = "ap-shanghai";
     private static COSClient cosClient;
     private static TransferManager transferManager;
     public static void initConnection()
     {
         //创建COSClient对象
+        RestTemplate restTemplate = new RestTemplate();
+        Map forObject = restTemplate.getForObject("http://localhost:8085/getSecretKey", Map.class);
+        SECRETID = (String) forObject.get("SecretId");
+        SECRETKEY = (String) forObject.get("SecretKey");
+        SESSION_TOKEN = (String) forObject.get("sessionToken");
         cosClient = createCOSClient();
         transferManager = createTransferManager(cosClient);
     }
@@ -165,9 +173,11 @@ public class COSUtils
     public static COSClient createCOSClient()
     {
         // 1 初始化用户身份信息（secretId, secretKey）。
-        String secretId = SECRETID;
-        String secretKey = SECRETKEY;
-        COSCredentials cred = new BasicCOSCredentials(secretId, secretKey);
+        String tmpSecretId = SECRETID;
+        String tmpSecretKey = SECRETKEY;
+        String sessionToken = SESSION_TOKEN;
+
+        COSCredentials cred = new BasicSessionCredentials(tmpSecretId, tmpSecretKey, sessionToken);
         // 2 设置 bucket 的地域
         Region region = new Region(COS_REGION);
         ClientConfig clientConfig = new ClientConfig(region);

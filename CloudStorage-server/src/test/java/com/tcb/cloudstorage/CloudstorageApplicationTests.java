@@ -13,10 +13,13 @@ import com.tcb.cloudstorage.utils.JedisUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.web.client.RestTemplate;
 import redis.clients.jedis.Jedis;
 
+import javax.servlet.http.HttpServletResponse;
 import java.io.File;
 import java.security.GeneralSecurityException;
+import java.util.Map;
 
 @SpringBootTest
 class CloudstorageApplicationTests
@@ -66,5 +69,13 @@ class CloudstorageApplicationTests
         int folderId = 1;
         Folder folder = folderMapper.selectById(folderId);
         System.out.println(folder);
+    }
+
+    @Test
+    void testGetSecretKey()
+    {
+        RestTemplate restTemplate = new RestTemplate();
+        Map forObject = restTemplate.getForObject("http://localhost:8085/getSecretKey", Map.class);
+        System.out.println(forObject.toString());       //输出1
     }
 }
