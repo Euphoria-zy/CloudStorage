@@ -229,7 +229,7 @@
 
             <!--移动文件或文件夹dialog-->
             <div id="moveFolderOrFileDialog">
-                <el-dialog title="复制到" :visible.sync="moveDialogTableVisible">
+                <el-dialog title="移动到" :visible.sync="moveDialogTableVisible">
                     <!--导航面包屑-->
                     <el-breadcrumb separator-class="el-icon-arrow-right">
                         <transition-group>
@@ -256,7 +256,7 @@
                     </el-table>
                     <div slot="footer" class="dialog-footer">
                         <el-button @click="moveDialogTableVisible = false" round>取 消</el-button>
-                        <el-button type="primary" @click="moveFileOrFolder(nowCopyFolder.folderId)" round>复制到此处</el-button>
+                        <el-button type="primary" @click="moveFileOrFolder(nowCopyFolder.folderId)" round>移动到此处</el-button>
                     </div>
                 </el-dialog>
             </div>
@@ -514,10 +514,11 @@
                 axios.post("/renameFile",params).then((res)=>{
                     if (res.data.flag){
                         this.$message({message: res.data.msg, type:"success"});
+                        this.getAll(nowFolderId);
                     }else {
                         this.$message.error(res.data.msg);
                     }
-                    this.getAll(nowFolderId);
+
                 });
             },
             editFolderName(folderId, name, nowFolderId) {
@@ -529,10 +530,10 @@
                 axios.post("/renameFolder",params).then((res)=>{
                     if (res.data.flag){
                         this.$message({message: res.data.msg, type:"success"});
+                        this.getAll(nowFolderId);
                     }else {
                         this.$message.error(res.data.msg);
                     }
-                    this.getAll(nowFolderId);
                 });
             },
             //删除文件
@@ -549,7 +550,6 @@
                         }else{
                             this.deleteFolder(row.folderId, nowFolderId);
                         }
-                        this.getAll(nowFolderId);
                     }
                 }).catch(() => {
                     this.$message({
@@ -565,6 +565,7 @@
                 axios.post("/deleteFile",params).then((res)=>{
                     if (res.data.flag){
                         this.$message({message: res.data.msg, type:"success"});
+                        this.getAll(nowFolderId);
                     }else {
                         this.$message.error(res.data.msg);
                     }
@@ -576,6 +577,7 @@
                 axios.post("/deleteFolder",params).then((res)=>{
                     if (res.data.flag){
                         this.$message({message: res.data.msg, type:"success"});
+                        this.getAll(nowFolderId);
                     }else {
                         this.$message.error(res.data.msg);
                     }
@@ -623,7 +625,6 @@
                         this.getAll(parentFolderId);
                     }else{
                         this.$message.error(res.data.msg);
-                        this.getAll(this.nowFolderId);
                     }
                 });
             },
@@ -654,7 +655,6 @@
                         this.getAll(parentFolderId);
                     }else{
                         this.$message.error(res.data.msg);
-                        this.getAll(this.nowFolderId);
                     }
                 });
             }
