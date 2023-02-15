@@ -9,6 +9,7 @@ import com.tcb.cloudstorage.mapper.FileStoreMapper;
 import com.tcb.cloudstorage.service.FileService;
 import com.tcb.cloudstorage.service.FileStoreService;
 import com.tcb.cloudstorage.service.FolderService;
+import com.tcb.cloudstorage.service.LogService;
 import com.tcb.cloudstorage.utils.JedisUtils;
 import com.tcb.cloudstorage.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,16 @@ public class SystemController extends BaseController
 
     @Autowired
     private FileService fileService;
+
+    @Autowired
+    private LogService logService;
+
+    @RequestMapping("/log-list")
+    public R getLogList(){
+        Map<String, Object> map = new HashMap<String, Object>();
+        map.put("logList", logService.readLog(loginUser.getUserId()));
+        return new R(true, "日志列表加载成功", map);
+    }
 
     @RequestMapping("/file-list")
     public R getFileList(Integer folderId)

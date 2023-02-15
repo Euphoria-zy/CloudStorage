@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.tcb.cloudstorage.mapper.LogMapper">
+    <insert id="insertLog">
+        INSERT INTO `user_log` (user_id,record_time,operation_type,is_file,file_folder_id,is_operation_success)
+        VALUES(#{userId},#{recordTime},#{operationType},#{isFile},#{fileFolderId},#{isOperationSuccess});
+    </insert>
+    <select id="getLogs" resultType="com.tcb.cloudstorage.domain.UserLog">
+        SELECT
+            record_time,
+            operation_type,
+            is_file,
+            file_name,
+            folder_name,
+            is_operation_success
+        FROM
+            user_log,
+            user_file,
+            folder
+        WHERE (
+                          user_log.`user_id` = #{userId}
+                      AND user_file.`file_id` = user_log.`file_folder_id`
+                      AND folder.`folder_id` = user_log.`file_folder_id`
+                  )
+    </select>
+</mapper>
