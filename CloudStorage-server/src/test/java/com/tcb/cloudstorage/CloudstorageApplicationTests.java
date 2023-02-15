@@ -5,20 +5,21 @@ import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.tcb.cloudstorage.domain.FileStore;
 import com.tcb.cloudstorage.domain.Folder;
 import com.tcb.cloudstorage.domain.User;
+import com.tcb.cloudstorage.domain.UserLog;
 import com.tcb.cloudstorage.mapper.FolderMapper;
 import com.tcb.cloudstorage.mapper.UserMapper;
 import com.tcb.cloudstorage.service.FileStoreService;
-import com.tcb.cloudstorage.utils.EmailService;
+import com.tcb.cloudstorage.service.LogService;
 import com.tcb.cloudstorage.utils.JedisUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.RestTemplate;
 import redis.clients.jedis.Jedis;
-
-import javax.servlet.http.HttpServletResponse;
-import java.io.File;
 import java.security.GeneralSecurityException;
+import java.sql.Timestamp;
+import java.util.Date;
+import java.util.List;
 import java.util.Map;
 
 @SpringBootTest
@@ -28,9 +29,30 @@ class CloudstorageApplicationTests
     private UserMapper userMapper;
     @Autowired
     private FileStoreService fileStoreService;
-
     @Autowired
     private FolderMapper folderMapper;
+    @Autowired
+    private LogService logService;
+
+    @Test
+    void testRecordLog() {
+        logService.recordLog(UserLog.builder()
+                .userId(12)
+                .recordTime(new Timestamp(new Date().getTime()))
+                .operationType(2)
+                .isFile(true)
+                .fileFolderId(1)
+                .isOperationSuccess(true)
+                .build());
+    }
+    @Test
+    void testReadLog(){
+        List<UserLog> logs=logService.readLog(12);
+        for (UserLog log :
+                logs) {
+            System.out.println(log);
+        }
+    }
     @Test
     void sendEmail() throws GeneralSecurityException
     {
