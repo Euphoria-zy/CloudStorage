@@ -11,4 +11,6 @@ public interface LogService {
 
     //从数据库中，读取出一个用户的操作日志
     List<UserLog> readLog(int userId);
+
+    boolean deleteLog(int logId);
 }

@@ -2,12 +2,12 @@ package com.tcb.cloudstorage.controller;
 
 import com.tcb.cloudstorage.domain.FileStore;
 import com.tcb.cloudstorage.domain.Folder;
-import com.tcb.cloudstorage.domain.User;
 import com.tcb.cloudstorage.domain.UserFile;
 import com.tcb.cloudstorage.service.FileService;
 import com.tcb.cloudstorage.service.FileStoreService;
 import com.tcb.cloudstorage.service.FolderService;
-import com.tcb.cloudstorage.service.impl.FolderServiceImpl;
+import com.tcb.cloudstorage.service.LogService;
+import com.tcb.cloudstorage.service.impl.LogServiceImpl;
 import com.tcb.cloudstorage.utils.COSUtils;
 import com.tcb.cloudstorage.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,10 +16,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import javax.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.net.URL;
-import java.nio.charset.StandardCharsets;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -39,8 +37,28 @@ public class FunctionController extends BaseController
     @Autowired
     private FolderService folderService;
 
+    @Autowired
+    private LogService logService;
+
     public static boolean DELETE_FOLDER_FLAG = true;
     public static String DELETE_FOLDER_MSG = "";
+
+    /**
+     * @Description 根据logId删除日志
+     * @param logId
+     * @return
+     */
+    @RequestMapping("/deleteLog")
+    public R deleteLog(@RequestParam int logId)
+    {
+        System.out.println(logId);
+        boolean flag = logService.deleteLog(logId);
+        if (flag){
+            return new R(true, "删除成功!");
+        }else {
+            return new R(false, "删除失败!");
+        }
+    }
 
     /**
      * @Description 上传文件,并将文件元数据信息更新到数据库

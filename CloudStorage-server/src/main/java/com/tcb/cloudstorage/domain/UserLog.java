@@ -37,17 +37,12 @@ public class UserLog {
     5-"复制"
     6-"重命名"
     7-"删除"*/
-
+    private String operationName;//传向前段的临时属性
     private boolean isFile;//正常属性，【构造时传入】
 /*    取值说明
     true-"文件"
     false-"文件夹"*/
-
-    private String operationName;//传向前段的临时属性
-    private int fileFolderId;//正常属性，【构造时传入】
-    private String fileName;//数据库返回的临时属性
-    private String folderName;//数据库返回的临时属性
-    private String fileFolderName;//传向前段的临时属性
+    private String fileFolderName;//正常属性，【构造时传入】
     private boolean isOperationSuccess;//正常属性，【构造时传入】
 
 }
