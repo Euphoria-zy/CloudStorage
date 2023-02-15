@@ -35,15 +35,26 @@ class CloudstorageApplicationTests
     private LogService logService;
 
     @Test
+    void testDeleteLog(){
+        logService.deleteLog(59);
+        List<UserLog> logs=logService.readLog(12);
+        for (UserLog log :
+                logs) {
+            System.out.println(log);
+        }
+    }
+    @Test
     void testRecordLog() {
-        logService.recordLog(UserLog.builder()
-                .userId(12)
-                .recordTime(new Timestamp(new Date().getTime()))
-                .operationType(2)
-                .isFile(true)
-                .fileFolderId(1)
-                .isOperationSuccess(true)
-                .build());
+        for(int i=0;i<10;i++) {
+            logService.recordLog(UserLog.builder()
+                    .userId(12)
+                    .recordTime(new Timestamp(new Date().getTime()))
+                    .operationType(1)
+                    .isFile(true)
+                    .fileFolderName("123")
+                    .isOperationSuccess(true)
+                    .build());
+        }
     }
     @Test
     void testReadLog(){

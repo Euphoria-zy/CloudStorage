@@ -38,14 +38,15 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, UserLog> implements L
         SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         for (UserLog log : logs) {
             log.setFormatTime(simpleDateFormat.format(new Date(log.getRecordTime().getTime())));
+            log.setRecordTime(null);
             log.setOperationName(typeNames[log.getOperationType() - 1]);
-            if(log.isFile()){
-                log.setFileFolderName(log.getFileName());
-            }else{
-                log.setFileFolderName(log.getFolderName());
-            }
         }
         return logs;
     }
 
+    @Override
+    public boolean deleteLog(int logId){
+        System.out.println(logId);
+        return logMapper.deleteLog(logId)>0;
+    }
 }

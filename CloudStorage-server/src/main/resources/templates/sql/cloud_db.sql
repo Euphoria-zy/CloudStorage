@@ -1,104 +1,95 @@
 /*
- Navicat Premium Data Transfer
+SQLyog Ultimate v10.00 Beta1
+MySQL - 8.0.32 : Database - cloud_db
+*********************************************************************
+*/
 
- Source Server         : zy
- Source Server Type    : MySQL
- Source Server Version : 80017
- Source Host           : localhost:3306
- Source Schema         : cloud_db
+/*!40101 SET NAMES utf8 */;
 
- Target Server Type    : MySQL
- Target Server Version : 80017
- File Encoding         : 65001
+/*!40101 SET SQL_MODE=''*/;
 
- Date: 13/02/2023 09:25:25
-*/
+/*!40014 SET @OLD_UNIQUE_CHECKS=@@UNIQUE_CHECKS, UNIQUE_CHECKS=0 */;
+/*!40014 SET @OLD_FOREIGN_KEY_CHECKS=@@FOREIGN_KEY_CHECKS, FOREIGN_KEY_CHECKS=0 */;
+/*!40101 SET @OLD_SQL_MODE=@@SQL_MODE, SQL_MODE='NO_AUTO_VALUE_ON_ZERO' */;
+/*!40111 SET @OLD_SQL_NOTES=@@SQL_NOTES, SQL_NOTES=0 */;
+CREATE DATABASE /*!32312 IF NOT EXISTS*/`cloud_db` /*!40100 DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci */ /*!80016 DEFAULT ENCRYPTION='N' */;
 
-SET NAMES utf8mb4;
-SET FOREIGN_KEY_CHECKS = 0;
+USE `cloud_db`;
 
--- ----------------------------
--- Table structure for file_store
--- ----------------------------
+/*Table structure for table `file_store` */
+
 DROP TABLE IF EXISTS `file_store`;
-CREATE TABLE `file_store`  (
-  `file_store_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '文件仓库id',
-  `user_id` int(11) NOT NULL COMMENT '用户id',
+
+CREATE TABLE `file_store` (
+  `file_store_id` int NOT NULL AUTO_INCREMENT COMMENT '文件仓库id',
+  `user_id` int NOT NULL COMMENT '用户id',
   `current_size` double NOT NULL COMMENT '当前仓库容量',
-  `max_size` int(11) NULL DEFAULT 1048576 COMMENT '最大容量（单位KB）',
+  `max_size` int DEFAULT '1048576' COMMENT '最大容量（单位KB）',
   PRIMARY KEY (`file_store_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 10 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB AUTO_INCREMENT=10 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 
--- ----------------------------
--- Records of file_store
--- ----------------------------
-INSERT INTO `file_store` VALUES (7, 12, 861, 1048756);
-INSERT INTO `file_store` VALUES (9, 14, 0, 1048576);
+/*Table structure for table `folder` */
 
--- ----------------------------
--- Table structure for folder
--- ----------------------------
 DROP TABLE IF EXISTS `folder`;
-CREATE TABLE `folder`  (
-  `folder_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '文件夹id',
+
+CREATE TABLE `folder` (
+  `folder_id` int NOT NULL AUTO_INCREMENT COMMENT '文件夹id',
   `folder_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '文件夹名称',
-  `parent_folder_id` int(11) NOT NULL COMMENT '父文件夹id',
-  `file_store_id` int(11) NOT NULL COMMENT '文件仓库id',
-  `folder_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '文件夹路径',
-  `create_time` datetime(0) NULL DEFAULT NULL COMMENT '创建时间',
+  `parent_folder_id` int NOT NULL COMMENT '父文件夹id',
+  `file_store_id` int NOT NULL COMMENT '文件仓库id',
+  `folder_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '文件夹路径',
+  `create_time` datetime DEFAULT NULL COMMENT '创建时间',
   PRIMARY KEY (`folder_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 11 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB AUTO_INCREMENT=11 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 
--- ----------------------------
--- Records of folder
--- ----------------------------
-INSERT INTO `folder` VALUES (1, 'zhou', 0, 7, '18372603972/', '2023-01-21 09:23:00');
-INSERT INTO `folder` VALUES (2, '漫威', 0, 7, '18372603972/', '2023-01-21 09:23:00');
-INSERT INTO `folder` VALUES (3, 'yun', 1, 7, '18372603972/zhou/', '2023-01-21 10:48:00');
-INSERT INTO `folder` VALUES (4, '音乐', 3, 7, '18372603972/zhou/yun/', '2023-01-21 12:48:00');
+/*Table structure for table `user` */
 
--- ----------------------------
--- Table structure for user
--- ----------------------------
 DROP TABLE IF EXISTS `user`;
-CREATE TABLE `user`  (
-  `user_id` int(11) NOT NULL AUTO_INCREMENT COMMENT '用户id，主键',
+
+CREATE TABLE `user` (
+  `user_id` int NOT NULL AUTO_INCREMENT COMMENT '用户id，主键',
   `username` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '用户名',
   `password` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '密码',
   `email` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL COMMENT '电子邮箱',
-  `file_store_id` int(32) NULL DEFAULT NULL COMMENT '文件仓库id',
-  `image_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '用户头像地址',
+  `file_store_id` int DEFAULT NULL COMMENT '文件仓库id',
+  `image_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '用户头像地址',
   PRIMARY KEY (`user_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB AUTO_INCREMENT=15 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 
--- ----------------------------
--- Records of user
--- ----------------------------
-INSERT INTO `user` VALUES (12, '18372603972', '123456', 'zh99499@163.com', 7, NULL);
-INSERT INTO `user` VALUES (14, '18993339604', '123456', 'zh99499@163.com', 9, NULL);
+/*Table structure for table `user_file` */
 
--- ----------------------------
--- Table structure for user_file
--- ----------------------------
 DROP TABLE IF EXISTS `user_file`;
-CREATE TABLE `user_file`  (
-  `file_id` int(11) NOT NULL AUTO_INCREMENT,
+
+CREATE TABLE `user_file` (
+  `file_id` int NOT NULL AUTO_INCREMENT,
   `file_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NOT NULL,
-  `file_type` int(32) NULL DEFAULT NULL COMMENT '文件类型（1-文档doc, 2-pdf，3-音乐music）,4-视频video，5-图片image,6-其他）',
-  `file_store_id` int(11) NULL DEFAULT NULL COMMENT '文件仓库id',
-  `parent_folder_id` int(11) NOT NULL COMMENT '父文件夹id',
-  `download_count` int(32) NULL DEFAULT NULL COMMENT '下载次数',
-  `upload_time` datetime(0) NULL DEFAULT NULL COMMENT '上传时间',
-  `file_size` double NULL DEFAULT NULL COMMENT '文件大小',
-  `postfix` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '文件后缀',
-  `file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci NULL DEFAULT NULL COMMENT '文件路径',
+  `file_type` int DEFAULT NULL COMMENT '文件类型（1-文档doc, 2-pdf，3-音乐music）,4-视频video，5-图片image,6-其他）',
+  `file_store_id` int DEFAULT NULL COMMENT '文件仓库id',
+  `parent_folder_id` int NOT NULL COMMENT '父文件夹id',
+  `download_count` int DEFAULT NULL COMMENT '下载次数',
+  `upload_time` datetime DEFAULT NULL COMMENT '上传时间',
+  `file_size` double DEFAULT NULL COMMENT '文件大小',
+  `postfix` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '文件后缀',
+  `file_path` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL COMMENT '文件路径',
   PRIMARY KEY (`file_id`) USING BTREE
-) ENGINE = InnoDB AUTO_INCREMENT = 15 CHARACTER SET = utf8mb4 COLLATE = utf8mb4_0900_ai_ci ROW_FORMAT = Dynamic;
+) ENGINE=InnoDB AUTO_INCREMENT=16 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci ROW_FORMAT=DYNAMIC;
 
--- ----------------------------
--- Records of user_file
--- ----------------------------
-INSERT INTO `user_file` VALUES (1, '123', 2, 7, 3, 1, '2023-01-21 12:00:00', 652, '.jpg', '18372603972/zhou/yun/');
-INSERT INTO `user_file` VALUES (2, '611362', 2, 7, 3, 2, '2023-01-21 12:44:00', 203, '.jpg', '18372603972/zhou/yun/');
+/*Table structure for table `user_log` */
 
-SET FOREIGN_KEY_CHECKS = 1;
+DROP TABLE IF EXISTS `user_log`;
+
+CREATE TABLE `user_log` (
+  `log_id` int NOT NULL AUTO_INCREMENT,
+  `user_id` int DEFAULT NULL,
+  `record_time` timestamp NULL DEFAULT NULL,
+  `operation_type` int DEFAULT NULL,
+  `is_file` tinyint(1) DEFAULT NULL,
+  `file_folder_name` varchar(255) CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci DEFAULT NULL,
+  `is_operation_success` tinyint(1) DEFAULT NULL,
+  PRIMARY KEY (`log_id`)
+) ENGINE=InnoDB AUTO_INCREMENT=72 DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
+
+/*!40101 SET SQL_MODE=@OLD_SQL_MODE */;
+/*!40014 SET FOREIGN_KEY_CHECKS=@OLD_FOREIGN_KEY_CHECKS */;
+/*!40014 SET UNIQUE_CHECKS=@OLD_UNIQUE_CHECKS */;
+/*!40111 SET SQL_NOTES=@OLD_SQL_NOTES */;
