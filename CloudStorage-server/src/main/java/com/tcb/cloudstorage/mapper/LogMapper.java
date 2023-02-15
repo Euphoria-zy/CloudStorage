@@ -7,7 +7,7 @@ import org.apache.ibatis.annotations.Mapper;
 import java.util.List;
 
 @Mapper
-public interface LogMapper  extends BaseMapper<UserLog> {
+public interface LogMapper extends BaseMapper<UserLog> {
     int insertLog(UserLog log);
     List<UserLog> getLogs(int userId);
     int deleteLog(int logId);

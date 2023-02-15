@@ -7,6 +7,8 @@ import com.tcb.cloudstorage.service.LogService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.sql.Timestamp;
+import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -28,8 +30,17 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, UserLog> implements L
     };
 
     @Override
-    public void recordLog(UserLog log) {
-        logMapper.insertLog(log);
+    public boolean recordLog(UserLog log)
+    {
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Date dateStr = null;
+        try {
+            dateStr = dateFormat.parse(dateFormat.format(new Date()));
+        } catch (ParseException e) {
+            e.printStackTrace();
+        }
+        log.setRecordTime(new Timestamp(dateStr.getTime()));
+        return logMapper.insertLog(log)>0;
     }
 
     @Override

@@ -29,7 +29,7 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, UserFile> implement
     @Override
     public boolean addUserFile(UserFile userFile)
     {
-        return fileMapper.insert(userFile)>0;
+        return fileMapper.insertUserFile(userFile);
     }
 
     @Override

@@ -11,6 +11,7 @@ import java.util.List;
 public interface FileMapper extends BaseMapper<UserFile>
 {
 
+    public boolean insertUserFile(UserFile userFile);
     /**
      * @Description 根据文件夹id获取文件夹下的文件
      * @param folderId

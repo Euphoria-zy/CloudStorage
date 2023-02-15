@@ -3,9 +3,11 @@ package com.tcb.cloudstorage.controller;
 import com.tcb.cloudstorage.domain.FileStore;
 import com.tcb.cloudstorage.domain.Folder;
 import com.tcb.cloudstorage.domain.UserFile;
+import com.tcb.cloudstorage.domain.UserLog;
 import com.tcb.cloudstorage.service.FileService;
 import com.tcb.cloudstorage.service.FileStoreService;
 import com.tcb.cloudstorage.service.FolderService;
+import com.tcb.cloudstorage.service.LogService;
 import com.tcb.cloudstorage.service.LogService;
 import com.tcb.cloudstorage.service.impl.LogServiceImpl;
 import com.tcb.cloudstorage.utils.COSUtils;
@@ -18,6 +20,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URL;
+import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -51,7 +54,6 @@ public class FunctionController extends BaseController
     @RequestMapping("/deleteLog")
     public R deleteLog(@RequestParam int logId)
     {
-        System.out.println(logId);
         boolean flag = logService.deleteLog(logId);
         if (flag){
             return new R(true, "删除成功!");
@@ -67,9 +69,8 @@ public class FunctionController extends BaseController
      * @return
      */
     @RequestMapping("/uploadFile")
-    public R uploadFile(@RequestParam MultipartFile file, @RequestParam int nowFolderId)
+    public R uploadFile(@RequestParam MultipartFile file, @RequestParam int nowFolderId) throws ParseException
     {
-        System.out.println(nowFolderId);
         FileStore store = fileStoreService.getFileStoreByUserId(loginUser.getUserId());
         String name = file.getOriginalFilename();
         //判断是否有同名文件
@@ -77,6 +78,11 @@ public class FunctionController extends BaseController
         //以用户名开头
         String folderPath = null;
         Folder nowFolder;
+        //上传时间
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Date dateStr = null;
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId()).operationType(1).isFile(true)
+                .fileFolderName(name).build();
         if (nowFolderId == 0){
             //当前目录为根目录
             userFiles = fileService.getRootFileByFileStoreId(loginUser.getFileStoreId());
@@ -89,25 +95,21 @@ public class FunctionController extends BaseController
         }
         for (int i = 0; i < userFiles.size(); i++) {
             if ((userFiles.get(i).getFileName()+userFiles.get(i).getPostfix()).equals(name)){
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "文件上传失败，当前目录已存在同名文件: "+name);
             }
         }
-        //上传时间
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        Date dateStr = null;
-        try
-        {
-            dateStr = dateFormat.parse(dateFormat.format(new Date()));
-        } catch (ParseException e)
-        {
-            e.printStackTrace();
-        }
         if (!fileService.checkFileName(name)){
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
             return new R(false, "上传失败!文件名不符合规范");
         }
         Integer sizeInt = Math.toIntExact(file.getSize() / 1024);
         //是否仓库放不下该文件
         if(store.getCurrentSize()+sizeInt > store.getMaxSize()){
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
             return new R(false,"仓库容量不够!");
         }
         //处理文件大小(以KB为单位)
@@ -136,20 +138,24 @@ public class FunctionController extends BaseController
             //关闭连接
             COSUtils.shutdownTransferManager();
             //上传成功,向数据库文件表写入数据
-            fileService.addUserFile(
-                    UserFile.builder()
-                            .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(folderPath)
-                            .downloadCount(0).uploadTime(dateStr).parentFolderId(nowFolderId).
-                            fileSize(Integer.valueOf(fileSize)).fileType(type).postfix(postfix).build());
+            UserFile userFile = UserFile.builder()
+                    .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(folderPath)
+                    .downloadCount(0).uploadTime(dateStr).parentFolderId(nowFolderId).
+                    fileSize(Integer.valueOf(fileSize)).fileType(type).postfix(postfix).build();
+            fileService.addUserFile(userFile);
             //更新仓库表的当前大小
             fileStoreService.addFileStoreSize(store.getFileStoreId(),store.getCurrentSize()+Integer.valueOf(fileSize));
+            //插入日志
+            userLog.setOperationSuccess(true);
+            logService.recordLog(userLog);
             try {
                 Thread.sleep(5000);
             } catch (InterruptedException e) {
                 e.printStackTrace();
             }
         }else{
-            System.out.println("文件: "+file.getOriginalFilename()+"上传失败!");
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
             return new R(false, "文件: "+file.getOriginalFilename()+"上传失败!");
         }
         return new R(true, "文件: "+file.getOriginalFilename()+"上传成功!", nowFolderId);
@@ -169,6 +175,9 @@ public class FunctionController extends BaseController
         FileStore store = fileStoreService.getFileStoreByUserId(loginUser.getUserId());
         List<Folder> folders = new ArrayList<>();
         String folderPath = null;
+        //上传时间
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Date dateStr = null;
         if (nowFolderId == 0){
             //向用户根目录添加文件夹
             folders = folderService.getRootFolderByFileStoreId(loginUser.getFileStoreId());
@@ -181,6 +190,8 @@ public class FunctionController extends BaseController
         }
         //判断当前选中文件夹是否已经存在
         String firstFolderName = null;
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId()).operationType(1).isFile(false)
+            .build();
         if (file.length>0){
             MultipartFile firstFile = file[0];
             String path = firstFile.getOriginalFilename();
@@ -188,7 +199,10 @@ public class FunctionController extends BaseController
             String filePath = path.substring(0,nameIndex);
             String[] fileFolder = filePath.split("/");
             firstFolderName = fileFolder[0];
+            userLog.setFileFolderName(firstFolderName);
             if (folderService.getFolderByPIdAndName(nowFolderId, firstFolderName) != null){
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "上传文件夹失败! 当前目录已存在同名文件夹: "+firstFolderName);
             }
         }
@@ -200,6 +214,8 @@ public class FunctionController extends BaseController
             if(store.getCurrentSize()+sizeInt > store.getMaxSize()){
                 //关闭连接
                 COSUtils.shutdownTransferManager();
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false,"仓库容量不够!");
             }
 
@@ -227,8 +243,7 @@ public class FunctionController extends BaseController
                 int parentFolderId = nowFolderId;
                 String currentFolderPath = folderPath;
                 //上传时间
-                SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-                Date dateStr = dateFormat.parse(dateFormat.format(new Date()));
+                dateStr = dateFormat.parse(dateFormat.format(new Date()));
                 for (int i = 0; i < fileFolder.length; i++)
                 {
                     Folder currentFolder = folderService.getFolderByPIdAndName(parentFolderId, fileFolder[i]);
@@ -266,15 +281,18 @@ public class FunctionController extends BaseController
                 try {
                     Thread.sleep(5000);
                 } catch (InterruptedException e) {
-                    System.out.println("添加文件信息:"+f.getOriginalFilename()+"失败!");
                     e.printStackTrace();
                 }
             }else{
-                System.out.println("文件: "+f.getOriginalFilename()+"上传失败!");
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
+                return new R(false, "上传文件夹:"+firstFolderName+"失败!");
             }
         }
         //关闭连接
         COSUtils.shutdownTransferManager();
+        userLog.setOperationSuccess(true);
+        logService.recordLog(userLog);
         return new R(true, "上传文件夹:"+firstFolderName+"成功!");
     }
 
@@ -284,11 +302,16 @@ public class FunctionController extends BaseController
      * @return
      */
     @RequestMapping("/downloadFile")
-    public R downloadFile(@RequestParam int fileId)
+    public R downloadFile(@RequestParam int fileId) throws ParseException
     {
         UserFile userFile = fileService.getFileByFileId(fileId);
         String name = userFile.getFileName();
         String postfix = userFile.getPostfix();
+        //上传时间
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
+        Date dateStr = null;
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId()).operationType(2).isFile(true)
+                .fileFolderName(name+postfix).build();
         String key = userFile.getFilePath() + name + postfix;
         URL url = null;
         //获取文件下载的url
@@ -302,8 +325,12 @@ public class FunctionController extends BaseController
             Map<String, Object> data = new HashMap<>();
             data.put("filePath", url);
             data.put("fileName", name+postfix);
+            userLog.setOperationSuccess(true);
+            logService.recordLog(userLog);
             return new R(true, "文件下载成功!", data);
         }else {
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
             return new R(false, "数据库文件信息更新失败");
         }
     }
@@ -315,16 +342,13 @@ public class FunctionController extends BaseController
      * @return
      */
     @RequestMapping("/addFolder")
-    public R addFolder(String folderName, int parentFolderId)
+    public R addFolder(String folderName, int parentFolderId) throws ParseException
     {
         //创建时间
+        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
         Date dateStr = null;
-        try {
-            SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-            dateStr = dateFormat.parse(dateFormat.format(new Date()));
-        } catch (ParseException e) {
-            e.printStackTrace();
-        }
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId()).operationType(3).isFile(false)
+                .fileFolderName(folderName).build();
         String folderPath = null;
         if (parentFolderId == 0){
             //向用户根目录添加文件夹
@@ -335,8 +359,10 @@ public class FunctionController extends BaseController
             folderPath = parentFolder.getFolderPath() +parentFolder.getFolderName() +"/";
         }
         if (folderService.getFolderByPIdAndName(parentFolderId, folderName) != null){
+            userLog.setOperationSuccess(false);
             return new R(false, "添加文件夹失败!当前目录已存在同名文件夹: "+folderName);
         }
+        dateStr = dateFormat.parse(dateFormat.format(new Date()));
         Folder newFolder = Folder.builder()
                 .folderName(folderName)
                 .parentFolderId(parentFolderId)
@@ -346,9 +372,12 @@ public class FunctionController extends BaseController
         //向数据库写入数据
         int b = folderService.addFolder(newFolder);
         if (b > 0){
+            userLog.setOperationSuccess(true);
             return new R(true, "文件夹："+folderName+"上传成功!");
-        }else
-            return new R(false,"文件夹："+folderName+"上传失败!");
+        }else {
+            userLog.setOperationSuccess(false);
+            return new R(false, "文件夹：" + folderName + "上传失败!");
+        }
     }
 
     /**
@@ -359,19 +388,28 @@ public class FunctionController extends BaseController
      * @return
      */
     @RequestMapping("/renameFile")
-    public R RenameFile(@RequestParam int fileId, @RequestParam String newFileName, @RequestParam int parentFolderId)
+    public R RenameFile(@RequestParam int fileId, @RequestParam String newFileName, @RequestParam int parentFolderId) throws ParseException
     {
         int index = newFileName.lastIndexOf(".");
         String name = newFileName.substring(0,index);
         String postfix = newFileName.substring(index);
+
+        UserFile userFile = fileService.getFileByFileId(fileId);
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId())
+                .fileFolderName(userFile.getFileName()+userFile.getPostfix()).isFile(true).operationType(6).build();
+        if ((userFile.getFileName()+userFile.getPostfix()).equals(newFileName)){
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
+            return new R(true, "新旧文件名一致，无需重命名!");
+        }
         //判断文件名是否冲突
         boolean b1 = fileService.isFileRepeat(parentFolderId, name, postfix);
         if (b1){
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
             return new R(false, "重命名失败，当前目录已存在同名文件: "+newFileName);
         }
-        UserFile userFile = fileService.getFileByFileId(fileId);
-        if ((userFile.getFileName()+userFile.getPostfix()).equals(newFileName))
-            return new R(true, "新旧文件名一致，无需重命名!");
+
         String sourceKey = userFile.getFilePath() + userFile.getFileName() +userFile.getPostfix();
         String destinationKey = userFile.getFilePath()+newFileName;
         boolean b2 = COSUtils.copyFile(sourceKey, destinationKey);
@@ -381,14 +419,24 @@ public class FunctionController extends BaseController
                 userFile.setFileName(name);
                 userFile.setPostfix(postfix);
                 boolean b4 = fileService.updateUserFileById(userFile);
-                if (b4)
+                if (b4) {
+                    userLog.setOperationSuccess(true);
+                    logService.recordLog(userLog);
                     return new R(true, "文件重命名成功");
-                else
+                }
+                else {
+                    userLog.setOperationSuccess(false);
+                    logService.recordLog(userLog);
                     return new R(false, "重命名信息写入数据库出错!");
+                }
             }else {
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "删除源文件对象出错!");
             }
         }else {
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
             return new R(false, "复制源文件出错!");
         }
     }
@@ -400,19 +448,28 @@ public class FunctionController extends BaseController
      * @return
      */
     @RequestMapping("/renameFolder")
-    public R RenameFolder(@RequestParam int folderId, @RequestParam String newFolderName, @RequestParam int parentFolderId)
+    public R RenameFolder(@RequestParam int folderId, @RequestParam String newFolderName, @RequestParam int parentFolderId) throws ParseException
     {
         Folder folder = folderService.getFolderById(folderId);
         Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, newFolderName);
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId())
+                .fileFolderName(folder.getFolderName()).isFile(false).operationType(6).build();
         if (folderByPIdAndName != null){
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
             return new R(false, "重命名失败，当前目录已存在同名文件夹: "+newFolderName);
         }else {
             folder.setFolderName(newFolderName);
             boolean b1 = folderService.updateFolder(folder);
             if (b1){
+                userLog.setOperationSuccess(true);
+                logService.recordLog(userLog);
                 return new R(true, "文件夹重命名成功!");
-            }else
+            }else {
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "文件夹重命名失败!");
+            }
         }
     }
 
@@ -422,12 +479,14 @@ public class FunctionController extends BaseController
      * @return
      */
     @RequestMapping("/deleteFile")
-    public R deleteFile(@RequestParam int fileId)
+    public R deleteFile(@RequestParam int fileId) throws ParseException
     {
         FileStore store = fileStoreService.getFileStoreByUserId(loginUser.getUserId());
         UserFile userFile = fileService.getFileByFileId(fileId);
         String name = userFile.getFileName();
         String postfix = userFile.getPostfix();
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId())
+                .fileFolderName(name+postfix).isFile(true).operationType(7).build();
         String key = userFile.getFilePath() + name + postfix;
         boolean b = COSUtils.deleteFile(key);
         if (b){
@@ -436,10 +495,17 @@ public class FunctionController extends BaseController
             boolean b1 = fileService.deleteFileById(fileId);
             if (b1){
                 fileStoreService.subFileStoreSize(store.getFileStoreId(), store.getCurrentSize()-userFile.getFileSize());
+                userLog.setOperationSuccess(true);
+                logService.recordLog(userLog);
                 return new R(true, "文件: "+ name+postfix +"删除成功!");
-            }else
+            }else{
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "文件: "+ name+postfix +"删除失败!");
+            }
         }else{
+            userLog.setOperationSuccess(false);
+            logService.recordLog(userLog);
             return new R(false, "文件: "+ name+postfix +"删除失败!");
         }
     }
@@ -450,16 +516,21 @@ public class FunctionController extends BaseController
      * @return
      */
     @RequestMapping("/deleteFolder")
-    public R deleteFolder(@RequestParam int folderId)
+    public R deleteFolder(@RequestParam int folderId) throws ParseException
     {
         Folder folder = folderService.getFolderById(folderId);
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId())
+                .fileFolderName(folder.getFolderName()).isFile(false).operationType(7).build();
         deepDeleteFolder(folder);
         //关闭连接
         COSUtils.shutdownTransferManager();
         boolean deleteResult = DELETE_FOLDER_FLAG;
         String deleteMsg = DELETE_FOLDER_MSG;
-        if (deleteResult)
-            deleteMsg = "文件夹："+ folder.getFolderName() +"删除成功!";
+        if (deleteResult) {
+            deleteMsg = "文件夹：" + folder.getFolderName() + "删除成功!";
+        }
+        userLog.setOperationSuccess(deleteResult);
+        logService.recordLog(userLog);
         return new R(deleteResult,deleteMsg);
     }
     /**
@@ -548,11 +619,12 @@ public class FunctionController extends BaseController
      * @return
      */
     @RequestMapping("/copyFileOrFolder")
-    public R copyFolderOrFile(@RequestParam int operateId, @RequestParam int operateType, @RequestParam int parentFolderId)
+    public R copyFolderOrFile(@RequestParam int operateId, @RequestParam int operateType, @RequestParam int parentFolderId) throws ParseException
     {
 
         String folderPath;
         FileStore store = fileStoreService.getFileStoreById(loginUser.getFileStoreId());
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId()).operationType(5).build();
         if (parentFolderId != 0) {
             Folder parentFolder = folderService.getFolderById(parentFolderId);
             folderPath = parentFolder.getFolderPath()+parentFolder.getFolderName()+"/";
@@ -563,6 +635,8 @@ public class FunctionController extends BaseController
         //复制文件夹
         if (operateType == 1) {
             Folder oldFolder = folderService.getFolderById(operateId);
+            userLog.setFileFolderName(oldFolder.getFolderName());
+            userLog.setFile(false);
             Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, oldFolder.getFolderName());
             if (folderByPIdAndName == null){
                 Folder newFolder = Folder.builder()
@@ -574,14 +648,22 @@ public class FunctionController extends BaseController
                 folderService.addFolderReturnFolderId(newFolder);
                 //更新文件夹下面的文件信息
                 copyFolder(newFolder,oldFolder,store);
+                userLog.setOperationSuccess(true);
+                logService.recordLog(userLog);
                 return new R(true, "复制文件夹成功!");
             }else {
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "复制失败，当前目录已存在同名文件夹!");
             }
         }else {
             UserFile userFile = fileService.getFileByFileId(operateId);
+            userLog.setFileFolderName(userFile.getFileName()+userFile.getPostfix());
+            userLog.setFile(true);
             boolean fileRepeat = fileService.isFileRepeat(parentFolderId, userFile.getFileName(), userFile.getPostfix());
             if (fileRepeat) {
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(true, "复制文件失败，当前目录已存在同名文件!");
             }else {
                 UserFile file = UserFile.builder().fileName(userFile.getFileName())
@@ -597,11 +679,17 @@ public class FunctionController extends BaseController
                     fileStoreService.addFileStoreSize(store.getFileStoreId(), store.getCurrentSize()+file.getFileSize());
                     store = fileStoreService.getFileStoreById(store.getFileStoreId());
                     if (b2) {
+                        userLog.setOperationSuccess(true);
+                        logService.recordLog(userLog);
                         return new R(true, "复制文件成功!");
                     }else {
+                        userLog.setOperationSuccess(false);
+                        logService.recordLog(userLog);
                         return new R(false, "复制文件信息到数据库失败!");
                     }
                 }else {
+                    userLog.setOperationSuccess(false);
+                    logService.recordLog(userLog);
                     return new R(false, "复制文件信息失败!");
                 }
             }
@@ -644,7 +732,7 @@ public class FunctionController extends BaseController
     }
 
     @RequestMapping("/moveFileOrFolder")
-    public R moveFileOrFolder(@RequestParam int operateId, @RequestParam int operateType, @RequestParam int parentFolderId)
+    public R moveFileOrFolder(@RequestParam int operateId, @RequestParam int operateType, @RequestParam int parentFolderId) throws ParseException
     {
         String folderPath = null;
         if (parentFolderId != 0){
@@ -653,24 +741,36 @@ public class FunctionController extends BaseController
         }else{
             folderPath = loginUser.getUsername()+"/";
         }
-
+        UserLog userLog = UserLog.builder().userId(loginUser.getUserId()).operationType(4).build();
         if (operateType == 1){
             //移动文件夹
             Folder nowFolder = folderService.getFolderById(operateId);
+            userLog.setFileFolderName(nowFolder.getFolderName());
+            userLog.setFile(false);
             Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, nowFolder.getFolderName());
-            if (folderByPIdAndName != null)
+            if (folderByPIdAndName != null){
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "移动失败，当前目录已存在同名文件夹!");
+            }
             nowFolder.setParentFolderId(parentFolderId);
             nowFolder.setFolderPath(folderPath);
             folderService.updateFolder(nowFolder);
             moveFolder(nowFolder);
+            userLog.setOperationSuccess(true);
+            logService.recordLog(userLog);
             return new R(true, "移动文件夹成功!");
         }else {
             //移动文件
             UserFile userFile = fileService.getFileByFileId(operateId);
+            userLog.setFileFolderName(userFile.getFileName()+userFile.getPostfix());
+            userLog.setFile(true);
             boolean fileRepeat = fileService.isFileRepeat(parentFolderId, userFile.getFileName(), userFile.getPostfix());
-            if (fileRepeat)
+            if (fileRepeat){
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "移动文件失败,当前目录已存在同名文件夹!");
+            }
             String sourceKey = userFile.getFilePath()+userFile.getFileName()+userFile.getPostfix();
             String destinationKey = folderPath+userFile.getFileName()+userFile.getPostfix();
             boolean b1 = COSUtils.copyFile(sourceKey, destinationKey);
@@ -680,13 +780,24 @@ public class FunctionController extends BaseController
                     userFile.setParentFolderId(parentFolderId);
                     boolean b3 = fileService.updateUserFileById(userFile);
                     if (b3) {
+                        userLog.setOperationSuccess(true);
+                        logService.recordLog(userLog);
                         return new R(true, "移动文件: "+userFile.getFileName()+"成功!");
-                    }else
+                    }else{
+                        userLog.setOperationSuccess(false);
+                        logService.recordLog(userLog);
                         return new R(false, "移动文件: "+userFile.getFileName()+"失败!数据库写入文件数据失败!");
-                }else
+                    }
+                }else {
+                    userLog.setOperationSuccess(false);
+                    logService.recordLog(userLog);
                     return new R(false, "删除源文件失败!");
-            }else
+                }
+            }else {
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
                 return new R(false, "复制源文件失败!");
+            }
         }
     }
 

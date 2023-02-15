@@ -18,6 +18,7 @@ import org.springframework.web.client.RestTemplate;
 import redis.clients.jedis.Jedis;
 import java.security.GeneralSecurityException;
 import java.sql.Timestamp;
+import java.text.ParseException;
 import java.util.Date;
 import java.util.List;
 import java.util.Map;
@@ -44,7 +45,8 @@ class CloudstorageApplicationTests
         }
     }
     @Test
-    void testRecordLog() {
+    void testRecordLog() throws ParseException
+    {
         for(int i=0;i<10;i++) {
             logService.recordLog(UserLog.builder()
                     .userId(12)

@@ -101,6 +101,14 @@
             type = #{type},
         </if>
     </sql>
+    <!--插入文件并返回id-->
+    <insert id="insertUserFile" useGeneratedKeys="true" keyProperty="fileId">
+        INSERT INTO `user_file`
+            (file_name,file_type,file_store_id,parent_folder_id,download_count,upload_time,postfix,file_size,file_path)
+        VALUES(#{fileName},#{fileType},#{fileStoreId},#{parentFolderId},#{downloadCount},#{uploadTime},#{postfix},#{fileSize},#{filePath})
+    </insert>
+
+
 
     <!--根据文件夹id获取下面文件-->
     <select id="getUserFileByFolderId" parameterType="int" resultMap="BaseResultMap">
