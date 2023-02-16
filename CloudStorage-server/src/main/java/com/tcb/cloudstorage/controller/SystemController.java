@@ -36,6 +36,11 @@ public class SystemController extends BaseController
     @Autowired
     private LogService logService;
 
+    /**
+     * @Description 返回userId的所有log
+     * @param
+     * @return
+     */
     @RequestMapping("/log-list")
     public R getLogList(){
         Map<String, Object> map = new HashMap<String, Object>();
