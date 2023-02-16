@@ -8,8 +8,6 @@ import com.tcb.cloudstorage.service.FileService;
 import com.tcb.cloudstorage.service.FileStoreService;
 import com.tcb.cloudstorage.service.FolderService;
 import com.tcb.cloudstorage.service.LogService;
-import com.tcb.cloudstorage.service.LogService;
-import com.tcb.cloudstorage.service.impl.LogServiceImpl;
 import com.tcb.cloudstorage.utils.COSUtils;
 import com.tcb.cloudstorage.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -20,7 +18,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 import java.io.IOException;
 import java.net.URL;
-import java.sql.Timestamp;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.*;
@@ -138,6 +135,7 @@ public class FunctionController extends BaseController
             //关闭连接
             COSUtils.shutdownTransferManager();
             //上传成功,向数据库文件表写入数据
+            dateStr = dateFormat.parse(dateFormat.format(new Date()));
             UserFile userFile = UserFile.builder()
                     .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(folderPath)
                     .downloadCount(0).uploadTime(dateStr).parentFolderId(nowFolderId).
@@ -307,9 +305,6 @@ public class FunctionController extends BaseController
         UserFile userFile = fileService.getFileByFileId(fileId);
         String name = userFile.getFileName();
         String postfix = userFile.getPostfix();
-        //上传时间
-        SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm");
-        Date dateStr = null;
         UserLog userLog = UserLog.builder().userId(loginUser.getUserId()).operationType(2).isFile(true)
                 .fileFolderName(name+postfix).build();
         String key = userFile.getFilePath() + name + postfix;
@@ -590,7 +585,7 @@ public class FunctionController extends BaseController
         List<Folder> route = new ArrayList<>();
         if (nowFolderId <= 0 || nowFolderId == null){
             nowFolderId = 0;
-            folderList = folderService.getFolderByParentFolderId(nowFolderId);
+            folderList = folderService.getRootFolderByFileStoreId(loginUser.getFileStoreId());
             nowFolder = Folder.builder().folderId(nowFolderId).fileStoreId(loginUser.getFileStoreId()).build();
         }else {
             folderList = folderService.getFolderByParentFolderId(nowFolderId);
@@ -647,7 +642,7 @@ public class FunctionController extends BaseController
                         .createTime(new Date()).build();
                 folderService.addFolderReturnFolderId(newFolder);
                 //更新文件夹下面的文件信息
-                copyFolder(newFolder,oldFolder,store);
+                copyFolder(newFolder,oldFolder,store,0);
                 userLog.setOperationSuccess(true);
                 logService.recordLog(userLog);
                 return new R(true, "复制文件夹成功!");
@@ -696,7 +691,7 @@ public class FunctionController extends BaseController
         }
     }
     //把oldFolder下的文件拷贝到newFolder
-    public void copyFolder(Folder newFolder, Folder oldFolder, FileStore store)
+    public void copyFolder(Folder newFolder, Folder oldFolder, FileStore store, int deep)
     {
         //拷贝文件
        List<UserFile> files = fileService.getUserFileByParentFolderId(oldFolder.getFolderId());
@@ -720,6 +715,11 @@ public class FunctionController extends BaseController
        //拷贝文件夹
        List<Folder> folderList = folderService.getFolderByParentFolderId(oldFolder.getFolderId());
        for (Folder folder: folderList){
+           if (deep == 0){
+               if (folder.getFolderName().equals(newFolder.getFolderName())){
+                   continue;
+               }
+           }
            Folder folder1 = Folder.builder()
                    .folderName(folder.getFolderName())
                    .fileStoreId(folder.getFileStoreId())
@@ -727,7 +727,7 @@ public class FunctionController extends BaseController
                    .folderPath(newFolder.getFolderPath()+newFolder.getFolderName()+"/")
                    .createTime(new Date()).build();
            folderService.addFolderReturnFolderId(folder1);
-           copyFolder(folder1,folder,store);
+           copyFolder(folder1,folder,store,deep+1);
        }
     }
 
@@ -735,8 +735,8 @@ public class FunctionController extends BaseController
     public R moveFileOrFolder(@RequestParam int operateId, @RequestParam int operateType, @RequestParam int parentFolderId) throws ParseException
     {
         String folderPath = null;
+        Folder parentFolder = folderService.getFolderById(parentFolderId);
         if (parentFolderId != 0){
-            Folder parentFolder = folderService.getFolderById(parentFolderId);
             folderPath = parentFolder.getFolderPath()+parentFolder.getFolderName()+"/";
         }else{
             folderPath = loginUser.getUsername()+"/";
@@ -747,6 +747,11 @@ public class FunctionController extends BaseController
             Folder nowFolder = folderService.getFolderById(operateId);
             userLog.setFileFolderName(nowFolder.getFolderName());
             userLog.setFile(false);
+            if (nowFolder.getFolderId() == parentFolderId || nowFolder.getFolderId() == parentFolder.getParentFolderId()){
+                userLog.setOperationSuccess(false);
+                logService.recordLog(userLog);
+                return new R(false, "不能将文件夹移动到自身或其子目录下");
+            }
             Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, nowFolder.getFolderName());
             if (folderByPIdAndName != null){
                 userLog.setOperationSuccess(false);
@@ -778,6 +783,7 @@ public class FunctionController extends BaseController
                 boolean b2 = COSUtils.deleteFile(sourceKey);
                 if (b2) {
                     userFile.setParentFolderId(parentFolderId);
+                    userFile.setFilePath(folderPath);
                     boolean b3 = fileService.updateUserFileById(userFile);
                     if (b3) {
                         userLog.setOperationSuccess(true);

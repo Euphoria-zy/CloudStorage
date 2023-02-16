@@ -315,8 +315,8 @@
             handleLink(folderId){
                 this.getAll(folderId);
             },
-            uploadSuccess(response, file, fileList){
-                if (response.flag == true){
+            uploadSuccess(res){
+                if (res.flag){
                     this.$message({message: res.data.msg, type:"success"});
                     this.getAll(this.nowFolderId);
                 }else {
