@@ -29,6 +29,11 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, UserLog> implements L
             "删除"
     };
 
+    /**
+     * @Description 插入一条log
+     * @param log
+     * @return
+     */
     @Override
     public boolean recordLog(UserLog log)
     {
@@ -43,6 +48,11 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, UserLog> implements L
         return logMapper.insertLog(log)>0;
     }
 
+    /**
+     * @Description 返回userId的所有log
+     * @param userId
+     * @return
+     */
     @Override
     public List<UserLog> readLog(int userId) {
         List<UserLog> logs = logMapper.getLogs(userId);
@@ -55,9 +65,14 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, UserLog> implements L
         return logs;
     }
 
+    /**
+     * @Description 删除一条log
+     * @param logId
+     * @return
+     */
     @Override
     public boolean deleteLog(int logId){
-        System.out.println(logId);
+        ///System.out.println(logId);
         return logMapper.deleteLog(logId)>0;
     }
 }
