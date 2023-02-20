@@ -28,9 +28,9 @@ public class FileStore
     private int userId;
 
     //存储空间大小
-    private int currentSize;
+    private long currentSize;
 
     //总容量
-    private int maxSize;
+    private long maxSize;
 
 }

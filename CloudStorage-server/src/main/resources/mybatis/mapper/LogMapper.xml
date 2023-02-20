@@ -20,4 +20,4 @@
     <delete id="deleteLog">
         delete from user_log where(log_id=#{logId})
     </delete>
-        </mapper>
+</mapper>

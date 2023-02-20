@@ -105,14 +105,28 @@
                         width="55">
                 </el-table-column>
                 <el-table-column
-                        width="80">
+                        width="50">
                     <template slot-scope="scope">
-                        <i v-if="scope.row.fileType == 1" class="el-icon-document"></i>
-                        <i v-else-if="scope.row.fileType == 2" class="el-icon-picture"></i>
-                        <i v-else-if="scope.row.fileType == 3" class="el-icon-video-play"></i>
-                        <i v-else-if="scope.row.fileType == 4" class="el-icon-headset"></i>
-                        <i v-else-if="scope.row.fileType == 5" class="el-icon-question"></i>
-                        <i v-else class="el-icon-folder"></i>
+                        <div class="demo-image__preview" v-if="scope.row.fileType == 2">
+                            <el-image
+                                    style="width: 32px; height: 32px"
+                                    :src="scope.row.fileImage"
+                                    :preview-src-list="srcList"
+                                    @click="viewImage(scope.row.fileImage)">
+                            </el-image>
+                        </div>
+                        <div class="demo-image__preview" v-else-if="scope.row.fileType == null">
+                            <el-image
+                                    style="width: 32px; height: 32px"
+                                    :src="initUrl">
+                            </el-image>
+                        </div>
+                        <div class="demo-image__preview" v-else>
+                            <el-image
+                                    style="width: 32px; height: 32px"
+                                    :src="scope.row.fileImage">
+                            </el-image>
+                        </div>
                     </template>
                 </el-table-column>
                 <el-table-column
@@ -216,7 +230,9 @@
                     <el-divider></el-divider>
                     <el-table :data="folderData" :show-header="false" @row-dblclick="handleDblClick">
                         <el-table-column label="图标" width="80">
-                            <i class="el-icon-folder"></i>
+                            <template>
+                                <i class="el-icon-folder"></i>
+                            </template>
                         </el-table-column>
                         <el-table-column property="folderName" label="文件名" width="80"></el-table-column>
                     </el-table>
@@ -250,7 +266,9 @@
                     <el-divider></el-divider>
                     <el-table :data="folderData" :show-header="false" @row-dblclick="handleDblClick">
                         <el-table-column label="图标" width="80">
-                            <i class="el-icon-folder"></i>
+                            <template>
+                                <i class="el-icon-folder"></i>
+                            </template>
                         </el-table-column>
                         <el-table-column property="folderName" label="文件名" width="80"></el-table-column>
                     </el-table>
@@ -288,7 +306,11 @@
                 folderLevel: [],
                 nowCopyFolder: {},
                 copyAndMoveId: null,
-                operateType: null
+                operateType: null,
+                initUrl: "https://img.51miz.com/Element/00/38/10/50/ed73a715_E381050_ba39adab.png",
+                srcList: [
+                    'https://fuss10.elemecdn.com/8/27/f01c15bb73e1ef3793e64e6b7bbccjpeg.jpeg',
+                ]
             }
         },
         created(){
@@ -334,6 +356,7 @@
                 }
             },
             uploadFile(event){
+                console.log("当前文件前端上传时间: "+new Date());
                 var file = event.target.files[0];
                 var formData = new FormData();
                 var nowFolderId = parseInt($('#nowF').html());
@@ -441,6 +464,10 @@
                 var minutes = add0(dt.getMinutes());
                 return year + '-' + mouth + '-' + day + ' ' + hour + ':' + minutes;
             },
+            viewImage(fileImage) {
+                this.srcList = [];
+                this.srcList.push(fileImage);
+            },
             handleDownLoad(row){
                 if (row.fileType != null){
                     console.log(row.fileId);
@@ -449,13 +476,13 @@
                     params.append("fileId",row.fileId);
                     axios.post("/downloadFile",params).then((res)=>{
                         if (res.data.flag){
-                            this.$message({message: res.data.msg, type:"success"});
                             let link = document.createElement("a"); //创建a标签
                             link.style.display = "none"; //使其隐藏
                             link.href = res.data.data.filePath; //赋予文件下载地址
                             link.setAttribute("download", res.data.data.fileName); //设置下载属性 以及文件名
                             document.body.appendChild(link); //a标签插至页面中
                             link.click(); //强制触发a标签事件
+                            this.$message({message: res.data.msg, type:"success"});
                         }else {
                             this.$message.error(res.data.msg);
                         }

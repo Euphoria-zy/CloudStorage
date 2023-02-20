@@ -38,6 +38,9 @@ public class UserFile
     //文件仓库id
     private int fileStoreId;
 
+    //文件图片
+    private String fileImage;
+
     //文件路径
     private String filePath;
 

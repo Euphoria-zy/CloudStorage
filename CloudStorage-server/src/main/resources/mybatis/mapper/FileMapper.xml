@@ -17,7 +17,7 @@
 
     <!--文件所有属性-->
     <sql id="Base_Column_List">
-        file_id, file_name, file_type, file_store_id, file_path, download_count, upload_time,
+        file_id, file_name, file_type, file_store_id, file_image, file_path, download_count, upload_time,
     parent_folder_id, file_size, postfix
     </sql>
     <!--添加属性sql-->
@@ -104,8 +104,8 @@
     <!--插入文件并返回id-->
     <insert id="insertUserFile" useGeneratedKeys="true" keyProperty="fileId">
         INSERT INTO `user_file`
-            (file_name,file_type,file_store_id,parent_folder_id,download_count,upload_time,postfix,file_size,file_path)
-        VALUES(#{fileName},#{fileType},#{fileStoreId},#{parentFolderId},#{downloadCount},#{uploadTime},#{postfix},#{fileSize},#{filePath})
+            (file_name,file_type,file_store_id,parent_folder_id,file_image,download_count,upload_time,postfix,file_size,file_path)
+        VALUES(#{fileName},#{fileType},#{fileStoreId},#{parentFolderId},#{fileImage},#{downloadCount},#{uploadTime},#{postfix},#{fileSize},#{filePath})
     </insert>
 
 

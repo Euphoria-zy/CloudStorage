@@ -68,6 +68,7 @@ public class FunctionController extends BaseController
     @RequestMapping("/uploadFile")
     public R uploadFile(@RequestParam MultipartFile file, @RequestParam int nowFolderId) throws ParseException
     {
+        System.out.println("后端接收到文件的时间: "+ new Date());
         FileStore store = fileStoreService.getFileStoreByUserId(loginUser.getUserId());
         String name = file.getOriginalFilename();
         //判断是否有同名文件
@@ -103,6 +104,7 @@ public class FunctionController extends BaseController
             return new R(false, "上传失败!文件名不符合规范");
         }
         Integer sizeInt = Math.toIntExact(file.getSize() / 1024);
+        System.out.println(sizeInt+"MB");
         //是否仓库放不下该文件
         if(store.getCurrentSize()+sizeInt > store.getMaxSize()){
             userLog.setOperationSuccess(false);
@@ -130,9 +132,11 @@ public class FunctionController extends BaseController
             key += (name + postfix);
         }
         //文件上传到COS服务器
+        System.out.println("文件开始上传COS时间: "+new Date());
         boolean b = COSUtils.uploadFile(key, file);
         if (b){
             //关闭连接
+            System.out.println("文件上传成功到COS时间: "+new Date());
             COSUtils.shutdownTransferManager();
             //上传成功,向数据库文件表写入数据
             dateStr = dateFormat.parse(dateFormat.format(new Date()));
@@ -140,6 +144,8 @@ public class FunctionController extends BaseController
                     .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(folderPath)
                     .downloadCount(0).uploadTime(dateStr).parentFolderId(nowFolderId).
                     fileSize(Integer.valueOf(fileSize)).fileType(type).postfix(postfix).build();
+            String fileImage = fileService.getFileImage(userFile);
+            userFile.setFileImage(fileImage);
             fileService.addUserFile(userFile);
             //更新仓库表的当前大小
             fileStoreService.addFileStoreSize(store.getFileStoreId(),store.getCurrentSize()+Integer.valueOf(fileSize));
@@ -268,11 +274,13 @@ public class FunctionController extends BaseController
                         dateStr = dateFormat.parse(dateFormat.format(new Date()));
                     }
                 }
-                fileService.addUserFile(
-                        UserFile.builder()
-                                .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(currentFolderPath)
-                                .downloadCount(0).uploadTime(dateStr).parentFolderId(parentFolderId).
-                                fileSize(Integer.valueOf(fileSize)).fileType(type).postfix(postfix).build());
+                UserFile userFile = UserFile.builder()
+                        .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(currentFolderPath)
+                        .downloadCount(0).uploadTime(dateStr).parentFolderId(parentFolderId).
+                        fileSize(Integer.valueOf(fileSize)).fileType(type).postfix(postfix).build();
+                String fileImage = fileService.getFileImage(userFile);
+                userFile.setFileImage(fileImage);
+                fileService.addUserFile(userFile);
                 //更新仓库表的当前大小
                 fileStoreService.addFileStoreSize(store.getFileStoreId(), store.getCurrentSize()+Integer.valueOf(fileSize));
                 store = fileStoreService.getFileStoreById(store.getFileStoreId());

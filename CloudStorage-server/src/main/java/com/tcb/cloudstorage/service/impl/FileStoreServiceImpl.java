@@ -67,7 +67,7 @@ public class FileStoreServiceImpl extends ServiceImpl<FileStoreMapper, FileStore
      * @return
      */
     @Override
-    public int addFileStoreSize(int fileStoreId, int size)
+    public int addFileStoreSize(int fileStoreId, long size)
     {
         FileStore fileStore = new FileStore();
         fileStore.setFileStoreId(fileStoreId);
@@ -82,7 +82,7 @@ public class FileStoreServiceImpl extends ServiceImpl<FileStoreMapper, FileStore
      * @return
      */
     @Override
-    public int subFileStoreSize(int fileStoreId, int size)
+    public int subFileStoreSize(int fileStoreId, long size)
     {
         FileStore fileStore = new FileStore();
         fileStore.setFileStoreId(fileStoreId);
