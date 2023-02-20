@@ -9,6 +9,7 @@ import com.tcb.cloudstorage.domain.User;
 import com.tcb.cloudstorage.domain.UserLog;
 import com.tcb.cloudstorage.mapper.FolderMapper;
 import com.tcb.cloudstorage.mapper.UserMapper;
+import com.tcb.cloudstorage.service.FileService;
 import com.tcb.cloudstorage.service.FileStoreService;
 import com.tcb.cloudstorage.service.LogService;
 import com.tcb.cloudstorage.utils.COSUtils;
@@ -39,6 +40,8 @@ class CloudstorageApplicationTests
     private FolderMapper folderMapper;
     @Autowired
     private LogService logService;
+    @Autowired
+    private FileService fileService;
 
     @Test
     void testDeleteLog(){
@@ -138,5 +141,12 @@ class CloudstorageApplicationTests
     {
         int i = fileStoreService.addFileStoreSize(7, 12);
         System.out.println(i);
+    }
+
+    @Test
+    void testGetFileSize()
+    {
+        Map<String, Object> fileSize = fileService.getFileSize(1024*1024*1024*4.3234);
+        System.out.println(fileSize);
     }
 }

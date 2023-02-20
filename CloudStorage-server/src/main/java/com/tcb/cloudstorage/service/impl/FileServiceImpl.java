@@ -14,7 +14,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.net.URL;
+import java.text.DecimalFormat;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -199,6 +202,30 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, UserFile> implement
         int time  = (int)Math.floor(times);
         URL videoImageUrl = COSUtils.getVideoImage(key, time / 2, saveImageKey);
         return videoImageUrl.toString();
+    }
+
+    @Override
+    public Map<String, Object> getFileSize(double fileSize)
+    {
+        DecimalFormat df = new DecimalFormat("#.00");
+        String fileSizeString = "";
+        Map<String, Object> map = new HashMap<>();
+        if (fileSize < 1024) {
+            fileSizeString = df.format((double) fileSize);
+            map.put("unit","B");
+        } else if (fileSize < 1048576) {
+            fileSizeString = df.format((double) fileSize / 1024);
+            map.put("unit","KB");
+        } else if (fileSize < 1073741824) {
+            fileSizeString = df.format((double) fileSize / 1048576);
+            map.put("unit","MB");
+        } else {
+            fileSizeString = df.format((double) fileSize / 1073741824);
+            map.put("unit","GB");
+        }
+        fileSize = Double.parseDouble(fileSizeString);
+        map.put("fileSize", fileSize);
+        return map;
     }
 
 }

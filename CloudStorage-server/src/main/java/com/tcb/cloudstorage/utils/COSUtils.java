@@ -134,7 +134,7 @@ public class COSUtils
     {
         // 存储桶的命名格式为 BucketName-APPID，此处填写的存储桶名称必须为此格式
         String bucketName = BUCKET_NAME +"-"+ APP_ID;
-        initConnection();
+        cosClient = createCOSClientUseKey();
         GeneratePresignedUrlRequest req =
                 new GeneratePresignedUrlRequest(bucketName, key, HttpMethodName.GET);
 

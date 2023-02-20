@@ -51,7 +51,10 @@ public class UserFile
     private Date uploadTime;
 
     //文件大小（单位kb）
-    private int fileSize;
+    private double fileSize;
+
+    //大小单位（B，KB，MB, GB，TB）
+    private String unit;
 
     //文件后缀
     private String postfix;

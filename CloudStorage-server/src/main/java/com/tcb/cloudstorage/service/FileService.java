@@ -5,6 +5,7 @@ import com.tcb.cloudstorage.domain.User;
 import com.tcb.cloudstorage.domain.UserFile;
 
 import java.util.List;
+import java.util.Map;
 
 public interface FileService
 {
@@ -78,5 +79,7 @@ public interface FileService
      * @return
      */
     public String getVideoImage(UserFile userFile);
+
+    public Map<String, Object> getFileSize(double fileSize);
 
 }
