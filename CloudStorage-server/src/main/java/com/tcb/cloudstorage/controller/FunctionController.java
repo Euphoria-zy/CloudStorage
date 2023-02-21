@@ -44,6 +44,21 @@ public class FunctionController extends BaseController
     public static String DELETE_FOLDER_MSG = "";
 
     /**
+     * @Description 删除全部日志
+     * @param
+     * @return
+     */
+    @RequestMapping("/clearLog")
+    public R clearLog()
+    {
+        boolean flag = logService.clearLog(loginUser.getUserId());
+        if (flag){
+            return new R(true, "删除成功!");
+        }else {
+            return new R(false, "删除失败!");
+        }
+    }
+    /**
      * @Description 根据logId删除日志
      * @param logId
      * @return

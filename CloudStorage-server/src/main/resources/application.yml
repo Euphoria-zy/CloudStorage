@@ -15,10 +15,6 @@ spring:
     driver-class-name: com.mysql.cj.jdbc.Driver
   thymeleaf:
     cache: true
-  servlet:
-    multipart:
-      max-file-size: 10GB
-      max-request-size: 10GB
 mybatis-plus:
   mapper-locations: classpath*:mybatis/mapper/**/*.xml
   configuration:

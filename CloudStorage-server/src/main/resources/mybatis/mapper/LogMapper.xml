@@ -15,9 +15,12 @@
             is_operation_success
         FROM
             user_log
-        WHERE (user_log.`user_id` = #{userId})
+        WHERE (user_id = #{userId})
     </select>
     <delete id="deleteLog">
         delete from user_log where(log_id=#{logId})
+    </delete>
+    <delete id="clearLog">
+        delete from user_log where(user_id=#{userId})
     </delete>
 </mapper>
