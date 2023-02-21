@@ -11,4 +11,5 @@ public interface LogMapper extends BaseMapper<UserLog> {
     int insertLog(UserLog log);
     List<UserLog> getLogs(int userId);
     int deleteLog(int logId);
+    int clearLog(int userId);
 }

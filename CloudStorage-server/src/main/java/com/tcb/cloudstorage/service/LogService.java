@@ -29,4 +29,11 @@ public interface LogService {
      * @return
      */
     boolean deleteLog(int logId);
+
+    /**
+     * @Description 删除一条log
+     * @param
+     * @return
+     */
+    boolean clearLog(int userId);
 }

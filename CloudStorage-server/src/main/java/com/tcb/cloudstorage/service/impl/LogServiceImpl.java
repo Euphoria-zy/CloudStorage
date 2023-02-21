@@ -75,4 +75,9 @@ public class LogServiceImpl extends ServiceImpl<LogMapper, UserLog> implements L
         ///System.out.println(logId);
         return logMapper.deleteLog(logId)>0;
     }
+
+    @Override
+    public boolean clearLog(int userId) {
+        return logMapper.clearLog(userId)>0;
+    }
 }
