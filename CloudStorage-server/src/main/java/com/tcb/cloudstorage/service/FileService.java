@@ -5,6 +5,7 @@ import com.tcb.cloudstorage.domain.User;
 import com.tcb.cloudstorage.domain.UserFile;
 
 import java.util.List;
+import java.util.Map;
 
 public interface FileService
 {
@@ -57,4 +58,28 @@ public interface FileService
      * @return
      */
     public boolean isFileRepeat(int parentFolderId, String fileName, String postfix);
+
+    /**
+     * @Description 获取文件图标url，图片文件返回图片地址，视频文件返回截帧图片地址
+     * @param userFile
+     * @return
+     */
+    public String getFileImage(UserFile userFile);
+
+    /**
+     * @Description 根据文档类型后缀，获取图标
+     * @param postfix
+     * @return
+     */
+    public String getDocumentFileImage(String postfix);
+
+    /**
+     * @Description 获取视频截帧图片url
+     * @param userFile
+     * @return
+     */
+    public String getVideoImage(UserFile userFile);
+
+    public Map<String, Object> getFileSize(double fileSize);
+
 }

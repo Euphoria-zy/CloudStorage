@@ -38,6 +38,9 @@ public class UserFile
     //文件仓库id
     private int fileStoreId;
 
+    //文件图片
+    private String fileImage;
+
     //文件路径
     private String filePath;
 
@@ -48,7 +51,10 @@ public class UserFile
     private Date uploadTime;
 
     //文件大小（单位kb）
-    private int fileSize;
+    private double fileSize;
+
+    //大小单位（B，KB，MB, GB，TB）
+    private String unit;
 
     //文件后缀
     private String postfix;

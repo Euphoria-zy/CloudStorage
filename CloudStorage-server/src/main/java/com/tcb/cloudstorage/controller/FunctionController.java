@@ -83,6 +83,7 @@ public class FunctionController extends BaseController
     @RequestMapping("/uploadFile")
     public R uploadFile(@RequestParam MultipartFile file, @RequestParam int nowFolderId) throws ParseException
     {
+        System.out.println("后端接收到文件的时间: "+ new Date());
         FileStore store = fileStoreService.getFileStoreByUserId(loginUser.getUserId());
         String name = file.getOriginalFilename();
         //判断是否有同名文件
@@ -125,9 +126,9 @@ public class FunctionController extends BaseController
             return new R(false,"仓库容量不够!");
         }
         //处理文件大小(以KB为单位)
-        String fileSize = String.valueOf(file.getSize()/1024.0);
-        int indexDot = fileSize.lastIndexOf(".");
-        fileSize = fileSize.substring(0,indexDot);
+        Map<String, Object> fileSizeMap = fileService.getFileSize((double) file.getSize());
+        double fileSize = (double) fileSizeMap.get("fileSize");
+        String unit = (String) fileSizeMap.get("unit");
         //处理文件名
         int index = name.lastIndexOf(".");
         String tempName = name;
@@ -145,19 +146,23 @@ public class FunctionController extends BaseController
             key += (name + postfix);
         }
         //文件上传到COS服务器
+        System.out.println("文件开始上传COS时间: "+new Date());
         boolean b = COSUtils.uploadFile(key, file);
         if (b){
             //关闭连接
+            System.out.println("文件上传成功到COS时间: "+new Date());
             COSUtils.shutdownTransferManager();
             //上传成功,向数据库文件表写入数据
             dateStr = dateFormat.parse(dateFormat.format(new Date()));
             UserFile userFile = UserFile.builder()
                     .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(folderPath)
                     .downloadCount(0).uploadTime(dateStr).parentFolderId(nowFolderId).
-                    fileSize(Integer.valueOf(fileSize)).fileType(type).postfix(postfix).build();
+                    fileSize(fileSize).fileType(type).postfix(postfix).unit(unit).build();
+            String fileImage = fileService.getFileImage(userFile);
+            userFile.setFileImage(fileImage);
             fileService.addUserFile(userFile);
             //更新仓库表的当前大小
-            fileStoreService.addFileStoreSize(store.getFileStoreId(),store.getCurrentSize()+Integer.valueOf(fileSize));
+            fileStoreService.addFileStoreSize(store.getFileStoreId(), (long) (store.getCurrentSize()+file.getSize()/1024.0));
             //插入日志
             userLog.setOperationSuccess(true);
             logService.recordLog(userLog);
@@ -193,11 +198,9 @@ public class FunctionController extends BaseController
         Date dateStr = null;
         if (nowFolderId == 0){
             //向用户根目录添加文件夹
-            folders = folderService.getRootFolderByFileStoreId(loginUser.getFileStoreId());
             folderPath = loginUser.getUsername() +"/";
         }else{
             //向用户的其他目录添加文件夹
-            folders = folderService.getFolderByParentFolderId(nowFolderId);
             Folder parentFolder = folderService.getFolderById(nowFolderId);
             folderPath = parentFolder.getFolderPath() +parentFolder.getFolderName() +"/";
         }
@@ -244,11 +247,11 @@ public class FunctionController extends BaseController
             String name = fileName.substring(0,postfixIndex);
             int type = fileService.getFileTypeByPostfix(postfix);
             //处理文件大小(以KB为单位)
-            String fileSize = String.valueOf(f.getSize()/1024.0);
-            int indexDot = fileSize.lastIndexOf(".");
-            fileSize = fileSize.substring(0,indexDot);
-            String key = folderPath + filePath+"/"+name +postfix;
+            Map<String, Object> fileSizeMap = fileService.getFileSize((double) f.getSize());
+            double fileSize = (double) fileSizeMap.get("fileSize");
+            String unit = (String) fileSizeMap.get("unit");
 
+            String key = folderPath + filePath+"/"+name +postfix;
             //文件上传到COS服务器
             boolean b = COSUtils.uploadFile(key, f);
             if (b){
@@ -283,13 +286,15 @@ public class FunctionController extends BaseController
                         dateStr = dateFormat.parse(dateFormat.format(new Date()));
                     }
                 }
-                fileService.addUserFile(
-                        UserFile.builder()
-                                .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(currentFolderPath)
-                                .downloadCount(0).uploadTime(dateStr).parentFolderId(parentFolderId).
-                                fileSize(Integer.valueOf(fileSize)).fileType(type).postfix(postfix).build());
+                UserFile userFile = UserFile.builder()
+                        .fileName(name).fileStoreId(loginUser.getFileStoreId()).filePath(currentFolderPath)
+                        .downloadCount(0).uploadTime(dateStr).parentFolderId(parentFolderId).
+                        fileSize(fileSize).fileType(type).postfix(postfix).unit(unit).build();
+                String fileImage = fileService.getFileImage(userFile);
+                userFile.setFileImage(fileImage);
+                fileService.addUserFile(userFile);
                 //更新仓库表的当前大小
-                fileStoreService.addFileStoreSize(store.getFileStoreId(), store.getCurrentSize()+Integer.valueOf(fileSize));
+                fileStoreService.addFileStoreSize(store.getFileStoreId(), (long) (store.getCurrentSize()+f.getSize()/1024.0));
                 store = fileStoreService.getFileStoreById(store.getFileStoreId());
                 try {
                     Thread.sleep(5000);
@@ -504,7 +509,7 @@ public class FunctionController extends BaseController
             COSUtils.shutdownTransferManager();
             boolean b1 = fileService.deleteFileById(fileId);
             if (b1){
-                fileStoreService.subFileStoreSize(store.getFileStoreId(), store.getCurrentSize()-userFile.getFileSize());
+                fileStoreService.subFileStoreSize(store.getFileStoreId(), (long) (store.getCurrentSize()-userFile.getFileSize()));
                 userLog.setOperationSuccess(true);
                 logService.recordLog(userLog);
                 return new R(true, "文件: "+ name+postfix +"删除成功!");
@@ -567,7 +572,7 @@ public class FunctionController extends BaseController
                 count--;
                 b2 = fileService.deleteFileById(file.getFileId());
                 if (b2){
-                    fileStoreService.subFileStoreSize(store.getFileStoreId(), store.getCurrentSize()- file.getFileSize());
+                    fileStoreService.subFileStoreSize(store.getFileStoreId(), (long) (store.getCurrentSize()- file.getFileSize()));
                 }else {
                     DELETE_FOLDER_FLAG = false;
                     DELETE_FOLDER_MSG = "文件: "+name+postfix+"删除失败";
@@ -686,7 +691,7 @@ public class FunctionController extends BaseController
                 boolean b1 = COSUtils.copyFile(sourceKey, destinationKey);
                 if (b1) {
                     boolean b2 = fileService.addUserFile(file);
-                    fileStoreService.addFileStoreSize(store.getFileStoreId(), store.getCurrentSize()+file.getFileSize());
+                    fileStoreService.addFileStoreSize(store.getFileStoreId(), (long) (store.getCurrentSize()+file.getFileSize()));
                     store = fileStoreService.getFileStoreById(store.getFileStoreId());
                     if (b2) {
                         userLog.setOperationSuccess(true);
@@ -722,7 +727,7 @@ public class FunctionController extends BaseController
            if (b1){
                boolean b2 = fileService.addUserFile(userFile);
                if (b2) {
-                   fileStoreService.addFileStoreSize(store.getFileStoreId(), store.getCurrentSize()+userFile.getFileSize());
+                   fileStoreService.addFileStoreSize(store.getFileStoreId(), (long) (store.getCurrentSize()+userFile.getFileSize()));
                    store = fileStoreService.getFileStoreById(store.getFileStoreId());
                }
            }

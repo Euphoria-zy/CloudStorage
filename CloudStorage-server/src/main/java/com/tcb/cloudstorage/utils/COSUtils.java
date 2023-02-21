@@ -3,6 +3,7 @@ package com.tcb.cloudstorage.utils;
 import com.qcloud.cos.COSClient;
 import com.qcloud.cos.ClientConfig;
 import com.qcloud.cos.Headers;
+import com.qcloud.cos.auth.BasicCOSCredentials;
 import com.qcloud.cos.auth.BasicSessionCredentials;
 import com.qcloud.cos.auth.COSCredentials;
 import com.qcloud.cos.exception.CosClientException;
@@ -10,6 +11,10 @@ import com.qcloud.cos.exception.CosServiceException;
 import com.qcloud.cos.http.HttpMethodName;
 import com.qcloud.cos.http.HttpProtocol;
 import com.qcloud.cos.model.*;
+import com.qcloud.cos.model.ciModel.mediaInfo.MediaInfoRequest;
+import com.qcloud.cos.model.ciModel.mediaInfo.MediaInfoResponse;
+import com.qcloud.cos.model.ciModel.snapshot.SnapshotRequest;
+import com.qcloud.cos.model.ciModel.snapshot.SnapshotResponse;
 import com.qcloud.cos.region.Region;
 import com.qcloud.cos.transfer.*;
 import com.qcloud.cos.utils.DateUtils;
@@ -39,14 +44,14 @@ public class COSUtils
     {
         //创建COSClient对象
         RestTemplate restTemplate = new RestTemplate();
-        Map forObject = restTemplate.getForObject("http://43.138.22.212:8085/getSecretKey", Map.class);
+        //http://43.138.22.212:8085/getSecretKey
+        Map forObject = restTemplate.getForObject("http://43.138.22.212:8085/getTempSecretKey", Map.class);
         SECRETID = (String) forObject.get("SecretId");
         SECRETKEY = (String) forObject.get("SecretKey");
         SESSION_TOKEN = (String) forObject.get("sessionToken");
-        cosClient = createCOSClient();
+        cosClient = createCOSClientUseTempKey();
         transferManager = createTransferManager(cosClient);
     }
-
 
     /*
      * @Description: 上传文件
@@ -100,7 +105,7 @@ public class COSUtils
         //设置成下载形式为附件以及默认文件名
         String responseContentDisposition = "attachment;filename="+fileName;
         String responseCacheControl = "no-cache";
-        //设置请求过期时间为1小时
+        //设置请求过期时间为24小时
         String cacheExpireStr =
                 DateUtils.formatRFC822Date(new Date(System.currentTimeMillis() + 24L * 3600L * 1000L));
         //responseHeaders.setContentType(responseContentType);
@@ -112,8 +117,8 @@ public class COSUtils
         req.setResponseHeaders(responseHeaders);
 
         // 设置签名过期时间(可选)，若未进行设置，则默认使用 ClientConfig 中的签名过期时间(1小时)
-        // 这里设置签名过期时间为30分钟
-        Date expirationDate = new Date(System.currentTimeMillis() + 30L * 60L * 1000L);
+        // 这里设置签名过期时间为24小时
+        Date expirationDate = new Date(System.currentTimeMillis() + 24L * 3600L * 1000L);
         req.setExpiration(expirationDate);
         // 填写本次请求的头部
         // host 必填
@@ -121,6 +126,46 @@ public class COSUtils
 
         URL url = cosClient.generatePresignedUrl(req);
         System.out.println(url.toString());
+
+        return url;
+    }
+
+    public static URL getViewObjectUrl(String key)
+    {
+        // 存储桶的命名格式为 BucketName-APPID，此处填写的存储桶名称必须为此格式
+        String bucketName = BUCKET_NAME +"-"+ APP_ID;
+        cosClient = createCOSClientUseKey();
+        GeneratePresignedUrlRequest req =
+                new GeneratePresignedUrlRequest(bucketName, key, HttpMethodName.GET);
+
+        // 设置下载时返回的 http 头
+        ResponseHeaderOverrides responseHeaders = new ResponseHeaderOverrides();
+        //String responseContentType = "image/x-icon";
+        String responseContentLanguage = "zh-CN";
+        // 设置返回头部里包含文件名信息
+        //取消设置下载头为attachment
+        String responseContentDisposition = "filename="+key;
+        String responseCacheControl = "no-cache";
+        //设置请求过期时间为365天
+        String cacheExpireStr =
+                DateUtils.formatRFC822Date(new Date(System.currentTimeMillis() + 365L * 24L * 3600L * 1000L));
+        //responseHeaders.setContentType(responseContentType);
+        responseHeaders.setContentLanguage(responseContentLanguage);
+        responseHeaders.setContentDisposition(responseContentDisposition);
+        responseHeaders.setCacheControl(responseCacheControl);
+        responseHeaders.setExpires(cacheExpireStr);
+
+        req.setResponseHeaders(responseHeaders);
+
+        // 设置签名过期时间(可选)，若未进行设置，则默认使用 ClientConfig 中的签名过期时间(1小时)
+        // 这里设置签名过期时间为365天
+        Date expirationDate = new Date(System.currentTimeMillis() + 365L * 24L * 3600L * 1000L);
+        req.setExpiration(expirationDate);
+        // 填写本次请求的头部
+        // host 必填
+        req.putCustomRequestHeader(Headers.HOST, cosClient.getClientConfig().getEndpointBuilder().buildGeneralApiEndpoint(bucketName));
+
+        URL url = cosClient.generatePresignedUrl(req);
 
         return url;
     }
@@ -143,6 +188,7 @@ public class COSUtils
         return true;
     }
 
+    //复制文件
     public static boolean copyFile(String sourceKey, String destinationKey)
     {
         // 存储桶的命名格式为 BucketName-APPID，此处填写的存储桶名称必须为此格式
@@ -170,7 +216,52 @@ public class COSUtils
         return true;
     }
 
-    public static COSClient createCOSClient()
+    /**
+     * @Description 获取视频信息，时间
+     * @param key
+     * @return
+     */
+    public static MediaInfoResponse getVideoInfo(String key)
+    {
+        String bucketName = BUCKET_NAME +"-"+ APP_ID;
+        cosClient = createCOSClientUseKey();
+        //1.创建媒体信息请求对象
+        MediaInfoRequest request = new MediaInfoRequest();
+        //2.添加请求参数 参数详情请见api接口文档
+        request.setBucketName(bucketName);
+        request.getInput().setObject(key);
+        //3.调用接口,获取媒体信息响应对象
+        MediaInfoResponse response = cosClient.generateMediainfo(request);
+        return response;
+    }
+
+    /**
+     * @Description 视频截帧，返回图片url
+     * @param key
+     * @param time
+     * @param saveImageKey
+     * @return
+     */
+    public static URL getVideoImage(String key, int time, String saveImageKey)
+    {
+        String bucketName = BUCKET_NAME +"-"+ APP_ID;
+        cosClient = createCOSClientUseKey();
+        //1.创建截图请求对象
+        SnapshotRequest request = new SnapshotRequest();
+        //2.添加请求参数 参数详情请见api接口文档
+        request.setBucketName(bucketName);
+        request.getInput().setObject(key);
+        request.getOutput().setBucket(bucketName);
+        request.getOutput().setRegion(COS_REGION);
+        request.getOutput().setObject(saveImageKey);
+        request.setTime(String.valueOf(time));
+        //3.调用接口,获取截图响应对象
+        SnapshotResponse response = cosClient.generateSnapshot(request);
+        URL viewObjectUrl = getViewObjectUrl(saveImageKey);
+        return viewObjectUrl;
+    }
+
+    public static COSClient createCOSClientUseTempKey()
     {
         // 1 初始化用户身份信息（secretId, secretKey）。
         String tmpSecretId = SECRETID;
@@ -178,6 +269,34 @@ public class COSUtils
         String sessionToken = SESSION_TOKEN;
 
         COSCredentials cred = new BasicSessionCredentials(tmpSecretId, tmpSecretKey, sessionToken);
+        //COSCredentials cred = new BasicCOSCredentials(tmpSecretId, tmpSecretKey);
+        // 2 设置 bucket 的地域
+        Region region = new Region(COS_REGION);
+        ClientConfig clientConfig = new ClientConfig(region);
+        // 这里建议设置使用 https 协议
+        // 从 5.6.54 版本开始，默认使用了 https
+        clientConfig.setHttpProtocol(HttpProtocol.https);
+        // 以下的设置，是可选的：
+        // 设置 socket 读取超时，默认 30s
+        clientConfig.setSocketTimeout(30*1000);
+        // 设置建立连接超时，默认 30s
+        clientConfig.setConnectionTimeout(30*1000);
+
+        // 3 生成 cos 客户端。
+        cosClient = new COSClient(cred, clientConfig);
+        return cosClient;
+    }
+    public static COSClient createCOSClientUseKey()
+    {
+        // 1 初始化用户身份信息（secretId, secretKey）。
+        //创建COSClient对象
+        RestTemplate restTemplate = new RestTemplate();
+        //http://43.138.22.212:8085/getSecretKey
+        Map forObject = restTemplate.getForObject("http://43.138.22.212:8085/getFullSecretKey", Map.class);
+        SECRETID = (String) forObject.get("SecretId");
+        SECRETKEY = (String) forObject.get("SecretKey");
+        COSCredentials cred = new BasicCOSCredentials(SECRETID, SECRETKEY);
+        //COSCredentials cred = new BasicCOSCredentials(tmpSecretId, tmpSecretKey);
         // 2 设置 bucket 的地域
         Region region = new Region(COS_REGION);
         ClientConfig clientConfig = new ClientConfig(region);
@@ -199,7 +318,6 @@ public class COSUtils
     public static void showUpLoadProgress(Transfer transfer)
     {
         // 这里的 Transfer 是异步上传结果 Upload 的父类
-        System.out.println(transfer.getDescription());
         // transfer.isDone() 查询上传是否已经完成
         while (transfer.isDone() == false) {
             try {
@@ -229,7 +347,7 @@ public class COSUtils
     {
         // 自定义线程池大小，建议在客户端与 COS 网络充足（例如使用腾讯云的 CVM，同地域上传 COS）的情况下，设置成16或32即可，可较充分的利用网络资源
         // 对于使用公网传输且网络带宽质量不高的情况，建议减小该值，避免因网速过慢，造成请求超时。
-        ExecutorService threadPool = Executors.newFixedThreadPool(32);
+        ExecutorService threadPool = Executors.newFixedThreadPool(16);
 
         // 传入一个 threadpool, 若不传入线程池，默认 TransferManager 中会生成一个单线程的线程池。
         TransferManager transferManager = new TransferManager(cosClient, threadPool);
@@ -237,8 +355,14 @@ public class COSUtils
         // 设置高级接口的配置项
         // 分块上传阈值和分块大小分别为 5MB 和 1MB
         TransferManagerConfiguration transferManagerConfiguration = new TransferManagerConfiguration();
+        //分块大小为5MB
+        transferManagerConfiguration.setMinimumUploadPartSize(30*1024*1024);
+        //分块上传阈值为10MB，文件大于10MB的时候则进行并发的分块上传
         transferManagerConfiguration.setMultipartUploadThreshold(10*1024*1024);
-        transferManagerConfiguration.setMinimumUploadPartSize(5*1024*1024);
+        //分块复制的大小为100MB
+        transferManagerConfiguration.setMultipartCopyPartSize(100*1024*1024);
+        //分块复制阈值，超过1GB时采用分块复制
+        transferManagerConfiguration.setMultipartCopyThreshold(1024 * 1024 * 1024);
         transferManager.setConfiguration(transferManagerConfiguration);
 
         return transferManager;

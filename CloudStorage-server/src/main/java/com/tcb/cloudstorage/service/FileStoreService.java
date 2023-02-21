@@ -18,10 +18,10 @@ public interface FileStoreService
     public FileStore getFileStoreByUserId(int userId);
 
     //增加仓库可用容量
-    public int addFileStoreSize(int fileStoreId, int size);
+    public int addFileStoreSize(int fileStoreId, long size);
 
     //减少仓库可用容量
-    public int subFileStoreSize(int fileStoreId, int size);
+    public int subFileStoreSize(int fileStoreId, long size);
 
     //删除文件仓库
     public int delFileStoreById(int fileStoreId);
