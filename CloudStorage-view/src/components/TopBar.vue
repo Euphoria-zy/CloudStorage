@@ -1,9 +1,3 @@
-<script setup>
-import { ref } from 'vue'
-
-const userName = ref('User')
-</script>
-
 <template>
     <header>
         <div class="top-flex-container">
@@ -22,9 +16,19 @@ const userName = ref('User')
     </header>
 </template>
 
+<script>
+export default {
+    name: "TopBar",
+    data() {
+        return {
+            userName: "zhou"
+        }
+    }
+}
+</script>
 <style scoped>
 header {
-    height: 56px;
+    height: 55px;
     box-shadow: 0 3px 10px 0 rgb(0 0 0 / 6%);
     padding: 0 24px;
 }

@@ -15,78 +15,75 @@
                     <el-tabs type="border-card" class="tabRight" stretch="true">
                         <!-- 登录标签页 -->
                         <el-tab-pane label="登录">
-                            <el-form class="tabForm">
-                                <el-form-item>
-                                    <el-input placeholder="用户名：" v-model="Email" />
+                            <el-form class="tabForm" ref="LoginForm" :model="loginUser" :rules="rules">
+                                <el-form-item prop="username">
+                                    <el-input placeholder="用户名：" v-model="loginUser.username" />
                                 </el-form-item>
-                                <el-form-item>
-                                    <el-input placeholder="密码：" type="password" v-model="password" />
+                                <el-form-item prop="password">
+                                    <el-input placeholder="密码：" type="password" v-model="loginUser.password" />
                                 </el-form-item>
-                                <el-form-item>
-                                    <el-input placeholder="验证码：" v-model="Email" class="codeInput1" />
-                                    <canvas id="canvas" class="layui-input codeImg"></canvas>
+                                <el-form-item prop="imageCode">
+                                    <el-input placeholder="验证码：" class="codeInput1" type="text" v-model="loginUser.imageCode" />
+                                    <div class="identifybox" @click="refreshCode">
+                                        <ImageCode :identifyCode="identifyCode"></ImageCode>
+                                    </div>
                                 </el-form-item>
                                 <el-form-item>
                                     <el-link :underline="false" type="primary">
-                                        <a class="forPasBtn" @click="isChangePassword = true">忘记密码</a>
+                                        <a class="forPasBtn" @click="forgetPwdDialogVisible = true">忘记密码</a>
                                     </el-link>
-                                    <el-button type="primary" class="loginBtn" @click="login">登录</el-button>
+                                    <el-button type="primary" class="loginBtn" @click="login" :loading="loading">登录</el-button>
                                 </el-form-item>
                             </el-form>
                         </el-tab-pane>
                         <!-- 注册标签页 -->
                         <el-tab-pane label="注册">
-                            <el-form class="tabForm">
-                                <el-form-item>
-                                    <el-input placeholder="用户名：" v-model="Email" />
+                            <el-form class="tabForm" ref="RegForm" :model="registerUser" :rules="rules">
+                                <el-form-item prop="username">
+                                    <el-input placeholder="用户名：" v-model="registerUser.username" />
                                 </el-form-item>
-                                <el-form-item>
-                                    <el-input placeholder="密码：" type="password" v-model="rPassword" />
+                                <el-form-item prop="password">
+                                    <el-input placeholder="密码：" type="password" v-model="registerUser.password" />
                                 </el-form-item>
-                                <el-form-item>
-                                    <el-input placeholder="确认密码：" type="password" v-model="confirmPassword"
-                                        @blur="confirmFunc" />
+                                <el-form-item prop="confirmRegPassword">
+                                    <el-input placeholder="确认密码：" type="password" v-model="registerUser.confirmRegPassword" />
                                 </el-form-item>
-                                <el-form-item>
-                                    <el-input placeholder="电子邮箱：" v-model="Email" />
+                                <el-form-item prop="email">
+                                    <el-input placeholder="电子邮箱：" v-model="registerUser.email" />
                                 </el-form-item>
-                                <el-form-item class="closerItem">
-                                    <el-input placeholder="验证码：" type="password" v-model="identifyCode"
-                                        class="codeInput2" />
-                                    <el-button type="primary" @click="getIdentifyCode" class="codeButton" plain>
-                                        获取验证码
-                                    </el-button>
+                                <el-form-item class="closerItem" prop="emailCheckCode">
+                                    <el-input placeholder="验证码：" type="text" v-model="registerUser.emailCheckCode" class="codeInput2" />
+                                    <el-button type="primary" class="codeButton" :disabled="!canClick" @click="getRegisterCode" plain>{{ getCode }}</el-button>
                                 </el-form-item>
-                                <el-form-item class="closerItem">
-                                    <el-checkbox class="checkBox" v-model="rAgree" label="同意用户使用准则" name="type" />
+                                <el-form-item class="closerItem" prop="agree">
+                                    <el-checkbox class="checkBox" v-model="registerUser.agree" label="同意用户使用准则" name="type" />
                                 </el-form-item>
-                                <el-button type="primary" class="commonBtn" @click="register">注册</el-button>
+                                <el-button type="primary" class="commonBtn" @click="register" :loading="loading">注册</el-button>
                             </el-form>
                         </el-tab-pane>
                     </el-tabs>
                 </el-col>
                 <!-- 忘记密码弹窗 -->
-                <el-dialog v-model="isChangePassword" title="修改密码" width="400px">
-                    <el-form>
-                        <el-form-item>
-                            <el-input placeholder="用户名：" v-model="rEmail" />
+                <el-dialog title="修改密码" v-model="forgetPwdDialogVisible" width="400px" center>
+                    <el-form ref="ForgetPwdForm" :model="changePwd" :rules="rules">
+                        <el-form-item prop="username">
+                            <el-input placeholder="用户名：" v-model="changePwd.username" />
                         </el-form-item>
-                        <el-form-item>
-                            <el-input placeholder="新密码：" type="password" v-model="rPassword" />
+                        <el-form-item prop="password">
+                            <el-input placeholder="新密码：" type="password" v-model="changePwd.password" />
                         </el-form-item>
-                        <el-form-item>
-                            <el-input placeholder="确认密码：" type="password" v-model="confirmPassword" @blur="confirmFunc" />
+                        <el-form-item prop="confirmPassword">
+                            <el-input placeholder="确认密码：" type="password" v-model="changePwd.confirmPassword" />
                         </el-form-item>
-                        <el-form-item>
-                            <el-input placeholder="验证码：" type="password" v-model="identifyCode" class="codeInput2" />
-                            <el-button class="codeButton" type="primary" @click="getIdentifyCode" plain>
-                                获取验证码
-                            </el-button>
+                        <el-form-item prop="emailCheckCode">
+                            <el-input placeholder="验证码：" type="password" v-model="changePwd.emailCheckCode" class="codeInput2" />
+                            <el-button class="codeButton" type="primary" :disabled="!canClick" @click="getForgetPwdCode" plain>{{ getCode }}</el-button>
                         </el-form-item>
-                        <el-button type="primary" class="commonBtn" @click="changePassword">
-                            修改密码
-                        </el-button>
                     </el-form>
+                    <span slot="footer" class="dialog-footer">
+                        <el-button @click="forgetPwdDialogVisible = false">取 消</el-button>
+                        <el-button type="primary" class="commonBtn" @click="forgetPwd" :loading="loading">修改密码</el-button>
+                    </span>
                 </el-dialog>
             </el-row>
             <p class="msgBottom">版权所有@20xx-20xx | 团队：The Coding Boys | 联系方式：********</p>
@@ -95,59 +92,266 @@
 </template>
 
 <script>
-import { reactive, toRefs, ref } from "@vue/reactivity";
-import { ElMessage } from "element-plus";
+import API from "../api/api_user";
+import ImageCode from "../components/ImageCode.vue";
 export default {
-    setup() {
-        const form = reactive({
-            Email: "",
-            password: "",
-            isAgree: 0,
-        });
-        const registerForm = reactive({
-            rEmail: "",
-            rPassword: "",
-            confirmPassword: "",
-            identifyCode: "",
-            rAgree: 0,
-        });
-
-        // 方法
-        // 登录 将账号密码写入后台,获取用户数据,后登录
-        // 需要修改共享数据
-        function login() {
-            console.log(form);
-        }
-        // 注册 -- 将账号密码写入后台, 自动登录
-        // 需要修改共享数据
-        function register() {
-            console.log("注册", registerForm);
-        }
-        // 获取验证码
-        function getIdentifyCode() {
-            console.log("获取验证码");
-        }
-        // 确认密码
-        const confirmFunc = () => {
-            if (registerForm.confirmPassword !== registerForm.rPassword)
-                ElMessage.error("密码与确认密码不一致.");
-        };
-        // 修改密码
-        let isChangePassword = ref(false);
-        // 用的是注册参数
-        function changePassword() { }
-
-        return {
-            isChangePassword,
-            ...toRefs(form),
-            ...toRefs(registerForm),
-            login,
-            register,
-            getIdentifyCode,
-            confirmFunc,
-            changePassword,
-        };
+    components: {
+        ImageCode
     },
+    data() {
+        // 图片验证码自定义验证规则
+        const validateImageCode = (rule, value, callback) => {
+            if (value === "") {
+                callback(new Error('请输入验证码'))
+            } else if (value !== this.identifyCode) {
+                console.log('验证码:', value);
+                callback(new Error('验证码不正确!'))
+            } else {
+                callback()
+            }
+        };
+        // 确认密码自定义验证规则
+        const confirmRegPwd = (rule, value, callback) => {
+            if (value === "") {
+                callback(new Error('请再次输入密码'))
+            } else if (value !== this.registerUser.password) {
+                callback(new Error('两次输入不一致!'))
+            } else {
+                callback()
+            }
+        };
+        // 修改密码确认自定义验证规则
+        const confirmPwd = (rule, value, callback) => {
+            if (value === "") {
+                callback(new Error('请再次输入密码'))
+            } else if (value !== this.changePwd.password) {
+                callback(new Error('两次输入不一致!'))
+            } else {
+                callback()
+            }
+        };
+        return {
+            loading: false,
+            getCode: "获取验证码",
+            canClick: true,
+            forgetPwdDialogVisible: false,
+            loginUser: {
+                username: "",
+                password: "",
+                imageCode: ""
+            },
+            registerUser: {
+                username: "",
+                password: "",
+                email: "",
+                confirmRegPassword: "",
+                emailCheckCode: "",
+                agree: []
+            },
+            changePwd: {
+                username: "",
+                password: "",
+                confirmPassword: "",
+                emailCheckCode: ""
+            },
+            rules: {
+                username: [
+                    { required: true, message: "请输入账号", trigger: ["blur","change"] },
+                    { message: "电话号码格式不正确", pattern: /^[1][3,4,5,7,8][0-9]{9}$/, trigger: ["blur","change"]}
+                ],
+                password: [
+                    { required: true, message: "请输入密码", trigger: ["blur","change"] },
+                    { message: "密码至少为6位字母或数字的组合", pattern: /^[0-9a-zA-Z]{6,}$/, trigger: ["blur","change"]}
+                ],
+                email: [
+                    { required: true, message: "请输入邮箱", trigger: ["blur","change"] },
+                    { message: "电子邮箱格式不正确", type: 'email', trigger: ["blur","change"]}
+                ],
+                imageCode: [
+                    { required: true, trigger: ["blur","change"], validator: validateImageCode }
+                ],
+                confirmRegPassword: [
+                    { required: true, message: "请再次输入密码", trigger: ["blur","change"] },
+                    { required: true, trigger: ["blur","change"], validator: confirmRegPwd}
+                ],
+                confirmPassword: [
+                    { required: true, message: "请再次输入密码", trigger: ["blur","change"] },
+                    { required: true, trigger: ["blur","change"], validator: confirmPwd}
+                ],
+                emailCheckCode: [
+                    { required: true, message: "请输入验证码", trigger: "blur" },
+                ],
+                agree: [
+                    { required: true, message: "请阅读用户使用准则", trigger: ["blur","change"]}
+                ]
+            },
+            identifyCode: "",
+            identifyCodes: "1234567890"
+        }
+    },
+    created(){
+        this.refreshCode();
+    },
+    mounted() {
+        // 验证码初始化
+        this.identifyCode = '';
+        this.makeCode(this.identifyCodes, 4);
+    },
+    methods: {
+        login(){
+            let that = this;
+            this.$refs.LoginForm.validate(valid => {
+                if (valid){
+                    this.loading = true;
+                    let loginParams = this.loginUser;
+                    API.login(loginParams).then(
+                        function(res){
+                            that.loading = false;
+                            console.log(res);
+                            if(res.flag){
+                                that.$message({message: res.msg, type:"success"});
+                                that.$router.push({path: "/"});
+                            }else {
+                                that.$message.error(res.msg);
+                            }
+                        }
+                    )
+                }
+            });
+        },
+        register(){
+            let that = this;
+            this.$refs.RegForm.validate(valid =>{
+                if (valid) {
+                    this.loading = true;
+                    var registerParams = new FormData();
+                    registerParams.append("username", this.registerUser.username);
+                    registerParams.append("password", this.registerUser.password);
+                    registerParams.append("email", this.registerUser.email);
+                    registerParams.append("checkCode", this.registerUser.emailCheckCode);
+                    API.register(registerParams).then(
+                        function(res){
+                            that.loading = false;
+                            console.log(res);
+                            if(res.flag) {
+                                that.$message({message: res.msg, type:"success"});
+                                that.$router.push({path: "/login"});
+                            } else {
+                                that.$message.error(res.msg);
+                            }
+                        }
+                    )
+                }
+            });
+        },
+        forgetPwd(){
+            let that = this;
+            this.$refs.ForgetPwdForm.validate(valid =>{
+                if (valid) {
+                    this.loading = true;
+                    var forgetPwdParams = new FormData();
+                    forgetPwdParams.append("username", this.changePwd.username);
+                    forgetPwdParams.append("newPwd", this.changePwd.password);
+                    forgetPwdParams.append("checkCode", this.changePwd.emailCheckCode);
+                    API.forgetPwd(forgetPwdParams).then(
+                        function(res){
+                            that.loading = false;
+                            console.log(res);
+                            if(res.flag) {
+                                that.forgetPwdDialogVisible = false;
+                                that.$message({message: res.msg, type:"success"});
+                                
+                            } else {
+                                that.$message.error(res.msg);
+                            }
+                        }
+                    )
+                }
+            });
+        },
+        getRegisterCode(){
+            let that = this;
+            let validateList = [];
+            this.$refs.RegForm.validateField(['username','password','confimPassword','email','agree'], (err) =>{
+                validateList.push(err);
+            });
+            if(validateList.every((item) => item == "")) {
+                that.canClick = false;
+                var time = 120;
+                var timer = setInterval(function() {
+                    if (time == -1) {
+                        clearInterval(timer)
+                        that.canClick = true;
+                        that.getCode = '重新发送验证码';
+                    } else {
+                        that.getCode = time + '秒后重新获取';
+                        time--;
+                    }
+                }, 1000);
+                var getCodeParams = new FormData();
+                getCodeParams.append("username", that.registerUser.username);
+                getCodeParams.append("email", that.registerUser.email);
+                API.getRegisterCode(getCodeParams).then(function(res){
+                    if (res.flag){
+                        clearInterval(timer);
+                        that.canClick = true;
+                        that.getCode = '重新发送验证码';
+                        that.$message({message: res.msg, type:"success"});
+                    } else {
+                        that.$message.error(res.msg);
+                    }
+                })
+            }
+        },
+        getForgetPwdCode(){
+            let that = this;
+            let validateList = [];
+            this.$refs.ForgetPwdForm.validateField('username', (err) =>{
+                validateList.push(err);
+            });
+            if(validateList.every((item) => item == "")) {
+                that.canClick = false;
+                var time = 120;
+                var timer = setInterval(function() {
+                    if (time == -1) {
+                        clearInterval(timer)
+                        that.canClick = true;
+                        that.getCode = '重新发送验证码';
+                    } else {
+                        that.getCode = time + '秒后重新获取';
+                        time--;
+                    }
+                }, 1000);
+                var getCodeParams = new FormData();
+                getCodeParams.append("username", that.changePwd.username);
+                API.getForgetPwdCode(getCodeParams).then(function(res){
+                    if (res.flag){
+                        clearInterval(timer)
+                        that.canClick = true;
+                        that.getCode = '重新发送验证码';
+                        that.$message({message: res.msg, type:"success"});
+                    } else {
+                        that.$message.error(res.msg);
+                    }
+                })
+            }
+        },
+        //验证码----start
+        randomNum(min, max) {
+            return Math.floor(Math.random() * (max - min) + min);
+        },
+        refreshCode() {
+            this.identifyCode = "";
+            this.makeCode(this.identifyCodes, 4);
+        },
+        makeCode(o, l) {
+            for (let i = 0; i < l; i++) {
+                this.identifyCode += this.identifyCodes[
+                this.randomNum(0, this.identifyCodes.length)
+                ];
+            }
+        }
+    }
 };
 </script>
   
@@ -201,7 +405,7 @@ export default {
  }
 
  .codeInput1 {
-     width: calc(100% - 107px);
+     width: calc(90% - 100px);
  }
 
  .codeImg {
@@ -224,11 +428,11 @@ export default {
  }
 
  .codeInput2 {
-     width: calc(100% - 107px);
+     width: calc(80% - 100px);
  }
 
  .codeButton {
-     width: 102px;
+     width: 160px;
      margin-left: 5px;
  }
 
