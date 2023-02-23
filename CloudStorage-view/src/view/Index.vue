@@ -35,7 +35,9 @@
                     </el-row>
                 </el-main>
                 <!--body右侧文件信息-->
-                <el-main class="body-right"></el-main>
+                <el-main class="body-right">
+                    <ViewLog></ViewLog>
+                </el-main>
             </el-row>
         </el-main>
     </el-container>
@@ -43,12 +45,14 @@
 </template>
 
 <script>
+import ViewLog from './ViewLog.vue';
 import TopBar from '@/components/TopBar.vue';
 import SideBar from '../components/SideBar.vue';
 export default {
     components: {
         TopBar,
-        SideBar
+        SideBar,
+        ViewLog
     },
     methods: {
         handleOpen(key, keyPath) {
