@@ -88,11 +88,20 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     }
 
     @Override
-    public User getUserInfo(User user)
+    public User getUserByUsernameAndPwd(User user)
     {
         LambdaQueryWrapper<User> lambdaQueryWrapper = new QueryWrapper<User>().lambda();
         lambdaQueryWrapper.eq(User::getUsername, user.getUsername());
         lambdaQueryWrapper.eq(User::getPassword, user.getPassword());
+        User root = userMapper.selectOne(lambdaQueryWrapper);
+        return root;
+    }
+
+    @Override
+    public User getUserByUsername(User user)
+    {
+        LambdaQueryWrapper<User> lambdaQueryWrapper = new QueryWrapper<User>().lambda();
+        lambdaQueryWrapper.eq(User::getUsername, user.getUsername());
         User root = userMapper.selectOne(lambdaQueryWrapper);
         return root;
     }

@@ -14,6 +14,7 @@ import com.tcb.cloudstorage.utils.EmailService;
 import com.tcb.cloudstorage.utils.MultipartFileToFile;
 import com.tcb.cloudstorage.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
@@ -31,9 +32,9 @@ public class UserController extends BaseController
     private UserService userService;
 
     @RequestMapping("/login")
-    public R login(User user)
+    public R login(@RequestBody User user)
     {
-        User userInfo = userService.getUserInfo(user);
+        User userInfo = userService.getUserByUsernameAndPwd(user);
         if (userInfo != null){
             session.setAttribute("loginUser", userInfo);
             System.out.println("登陆成功:"+userInfo.getUsername());
@@ -109,7 +110,7 @@ public class UserController extends BaseController
         User user = new User();
         user.setUsername(username);
         //根据用户名查询用户完整信息
-        User userInfo = userService.getUserInfo(user);
+        User userInfo = userService.getUserByUsername(user);
         if (userInfo == null)
             return new R(false, "该用户不存在");
         try
@@ -126,19 +127,5 @@ public class UserController extends BaseController
             return new R(false, "验证码发送失败!");
         }
         return new R(true, "验证码发送成功!");
-    }
-
-    @RequestMapping("/fileUpLoad")
-    public R upLoadFile(@RequestParam MultipartFile multipart) throws IOException
-    {
-        String BucketName = BucketOperation.BUCKET_NAME;
-        String AppId = BucketOperation.APPID;
-        String key = multipart.getOriginalFilename();
-        System.out.println("文件名："+key);
-        File file = MultipartFileToFile.MultipartFileToFile(multipart);
-        COSClient cosClient = COS_Client.createCOSClient();
-        FileUpLoadWithTM fileUpLoadWithTM = new FileUpLoadWithTM();
-        fileUpLoadWithTM.upLoadFile(BucketName, AppId, key, file, TransferManagerManage.createTransferManager(cosClient));
-        return new R(true,"上传成功!");
     }
 }

@@ -17,5 +17,6 @@ public interface UserService
 
     public void saveCheckCode(User user, String checkCode);
 
-    public User getUserInfo(User user);
+    public User getUserByUsernameAndPwd(User user);
+    public User getUserByUsername(User user);
 }
