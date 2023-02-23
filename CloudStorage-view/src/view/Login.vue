@@ -25,7 +25,7 @@
                                 <el-form-item class="gapBig" prop="imageCode">
                                     <el-input placeholder="验证码：" class="codeInput1" type="text"
                                         v-model="loginUser.imageCode" />
-                                    <div class="identifybox codeImg" style="margin-top: 0px;" @click="refreshCode">
+                                    <div class="identifybox codeImg" @click="refreshCode">
                                         <ImageCode :identifyCode="identifyCode"></ImageCode>
                                     </div>
                                 </el-form-item>
@@ -91,7 +91,8 @@
                     </el-form>
                     <span slot="footer" class="dialog-footer">
                         <el-button style="width:100px;" @click="forgetPwdDialogVisible = false">取 消</el-button>
-                        <el-button style="width:100px;margin-left: 150px;" type="primary" @click="forgetPwd" :loading="loading">修改密码</el-button>
+                        <el-button style="width:100px;margin-left: 150px;" type="primary" @click="forgetPwd"
+                            :loading="loading">修改密码</el-button>
                     </span>
                 </el-dialog>
             </el-row>
@@ -473,4 +474,5 @@ export default {
  .commonBtn {
      margin-left: calc(50% - 50px);
      width: 100px;
- }</style>
+ }
+</style>
