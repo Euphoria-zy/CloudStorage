@@ -11,24 +11,27 @@
                 <el-main class="body-left">
                     <el-row>
                         <div class="sideBar">
-                            <SideBar></SideBar>
+                            <SideBar :pageIndex="pageIndex"></SideBar>
                         </div>
                         <div class="sideBar-menu">
                             <el-col>
                                 <el-menu 
                                     class="el-menu-vertical-demo"
                                     @open="handleOpen"
-                                    @close="handleClose">
-                                    <el-submenu index="1">
-                                        <template slot="title">
-                                            <i class="el-icon-location"></i>
+                                    @close="handleClose"
+                                    :default-active="$route.path" router>
+                                    <el-sub-menu index="1">
+                                        <template #title index="/index/files">
                                             <span>全部文件</span>
                                         </template>
                                         <el-menu-item-group>
-                                            <el-menu-item index="1-1">文档</el-menu-item>
-                                            <el-menu-item index="1-2">图片</el-menu-item>
+                                            <el-menu-item index="/index/document">文档</el-menu-item>
+                                            <el-menu-item index="/index/video">视频</el-menu-item>
+                                            <el-menu-item index="/index/music">音乐</el-menu-item>
+                                            <el-menu-item index="/index/other">其他</el-menu-item>
+                                            <el-menu-item index="/index/image">图片</el-menu-item>
                                         </el-menu-item-group>
-                                    </el-submenu>
+                                    </el-sub-menu>
                                 </el-menu>
                             </el-col>
                         </div>
@@ -36,7 +39,7 @@
                 </el-main>
                 <!--body右侧文件信息-->
                 <el-main class="body-right">
-                    <ViewLog></ViewLog>
+                    <RouterView></RouterView>
                 </el-main>
             </el-row>
         </el-main>
@@ -47,12 +50,22 @@
 <script>
 import ViewLog from './ViewLog.vue';
 import TopBar from '@/components/TopBar.vue';
-import SideBar from '../components/SideBar.vue';
+import SideBar from '@/components/SideBar.vue';
+import ElSubmenu from 'element-plus';
+import FileList from '@/view/Files.vue';
+import DocumentTable from '../components/DocumentTable.vue';
 export default {
     components: {
         TopBar,
         SideBar,
-        ViewLog
+        ElSubmenu,
+        FileList,
+        DocumentTable
+    },
+    data() {
+        return {
+            pageIndex: 1
+        }
     },
     methods: {
         handleOpen(key, keyPath) {
@@ -64,7 +77,7 @@ export default {
     }
 }
 </script>
-<style type="scope">
+<style scoped>
     .el-main {
         padding: 10px !important;
     }
@@ -97,6 +110,5 @@ export default {
     .sideBar-menu {
         width: 60%;
         height: 600px;
-        border: 1px solid;
     }
 </style>

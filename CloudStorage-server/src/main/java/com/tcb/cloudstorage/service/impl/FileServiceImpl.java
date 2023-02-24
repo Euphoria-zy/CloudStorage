@@ -228,4 +228,13 @@ public class FileServiceImpl extends ServiceImpl<FileMapper, UserFile> implement
         return map;
     }
 
+    @Override
+    public List<UserFile> getFileByType(int fileStoreId, int fileType)
+    {
+        LambdaQueryWrapper<UserFile> lambdaQueryWrapper = new QueryWrapper<UserFile>().lambda();
+        lambdaQueryWrapper.eq(UserFile::getFileStoreId, fileStoreId);
+        lambdaQueryWrapper.eq(UserFile::getFileType, fileType);
+        return fileMapper.selectList(lambdaQueryWrapper);
+    }
+
 }

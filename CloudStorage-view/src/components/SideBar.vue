@@ -4,26 +4,41 @@
             <el-menu class="el-menu-vertical-demo">
                 <el-menu-item index="1">
                     <el-col>
-                        <div class="menu-image"><img src="../assets/sidebar/index.png" /></div>
-                        <div class="menu-title"><span>首页</span></div>
+                            <div class="menu-image" v-if="pageIndex == 1">
+                                <img src="../assets/sidebar/index-active.png" />
+                            </div>
+                            <div class="menu-image" v-else>
+                                <img src="../assets/sidebar/index.png" />
+                            </div>
+                            <div class="menu-title"><span>首页</span></div>
                     </el-col>
                 </el-menu-item>
                 <el-menu-item index="2">
                     <el-col>
-                        <div class="menu-image"><img src="../assets/sidebar/sharing.png" /></div>
-                        <div class="menu-title"><span slot="title">分享</span></div>
+                        <div class="menu-image" v-if="pageIndex == 2">
+                            <img src="../assets/sidebar/sharing-active.png" />
+                        </div>
+                        <div class="menu-image" v-else>
+                            <img src="../assets/sidebar/sharing.png" />
+                        </div>
+                        <div class="menu-title"><span>分享</span></div>
                     </el-col>
                 </el-menu-item>
                 <el-menu-item index="3">
                     <el-col>
-                        <div class="menu-image"><img src="../assets/sidebar/about.png" /></div>
-                        <div class="menu-title"><span slot="title">关于我们</span></div>
+                        <div class="menu-image" v-if="pageIndex == 3">
+                            <img src="../assets/sidebar/about-active.png" />
+                        </div>
+                        <div class="menu-image" v-else>
+                            <img src="../assets/sidebar/about.png" />
+                        </div>
+                        <div class="menu-title"><span>关于我们</span></div>
                     </el-col>
                 </el-menu-item>
                 <el-menu-item index="4">
                     <el-col>
-                        <div class="menu-image"><i class="el-icon-setting"></i></div>
-                        <div class="menu-title"><span slot="title">云盘使用</span></div>
+                            <div class="menu-image"></div>
+                            <div class="menu-title"><span>日志记录</span></div>
                     </el-col>
                 </el-menu-item>
             </el-menu>
@@ -31,8 +46,13 @@
     </div>
 </template>
 <script>
+import { RouterLink } from 'vue-router';
 export default {
-    name: "SideBar"
+    name: "SideBar",
+    props: {
+        pageIndex: Number,
+        required: true
+    }
 }
 </script>
 

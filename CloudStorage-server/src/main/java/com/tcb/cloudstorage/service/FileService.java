@@ -82,4 +82,6 @@ public interface FileService
 
     public Map<String, Object> getFileSize(double fileSize);
 
+    public List<UserFile> getFileByType(int fileStoreId, int fileType);
+
 }

@@ -99,4 +99,14 @@ public class SystemController extends BaseController
 
         return new R(true, "文件列表加载成功", map);
     }
+
+    @RequestMapping("/getFileByType")
+    public R getFileByType(Integer fileType)
+    {
+        int fileStoreId = loginUser.getFileStoreId();
+        List<UserFile> fileByType = fileService.getFileByType(fileStoreId, fileType);
+        Map<String, Object> dataList = new HashMap<>();
+        dataList.put("datalist", fileByType);
+        return new R(true, "文件加载成功", dataList);
+    }
 }

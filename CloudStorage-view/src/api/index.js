@@ -1,6 +1,9 @@
 import axios from "axios";
 let baseurl = "http://localhost:8080";
 
+export default {
+    baseurl
+}
 
 export const POST = (url, params) =>{
     return axios.post(`${baseurl}${url}`, params).then(res => res.data);

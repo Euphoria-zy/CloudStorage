@@ -220,7 +220,7 @@ export default {
                             console.log(res);
                             if (res.flag) {
                                 that.$message({ message: res.msg, type: "success" });
-                                that.$router.push({ path: "/" });
+                                that.$router.push({ path: "/index" });
                             } else {
                                 that.$message.error(res.msg);
                             }
@@ -270,7 +270,6 @@ export default {
                             if (res.flag) {
                                 that.forgetPwdDialogVisible = false;
                                 that.$message({ message: res.msg, type: "success" });
-
                             } else {
                                 that.$message.error(res.msg);
                             }
