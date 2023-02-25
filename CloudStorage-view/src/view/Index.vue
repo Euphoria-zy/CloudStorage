@@ -21,8 +21,10 @@
                                     @close="handleClose"
                                     :default-active="$route.path" router>
                                     <el-sub-menu index="1">
-                                        <template #title index="/index/files">
-                                            <span>全部文件</span>
+                                        <template #title>
+                                            <RouterLink to="/index/files">
+                                                <span>&nbsp;&nbsp;&nbsp;&nbsp;全 部 文 件&nbsp;&nbsp;</span>
+                                            </RouterLink>
                                         </template>
                                         <el-menu-item-group>
                                             <el-menu-item index="/index/document">文档</el-menu-item>
@@ -110,5 +112,13 @@ export default {
     .sideBar-menu {
         width: 60%;
         height: 600px;
+    }
+    a {
+        text-decoration: none;
+        color: black;
+    }
+    .router-link-active {
+        text-decoration: none;
+        color: blue;
     }
 </style>
