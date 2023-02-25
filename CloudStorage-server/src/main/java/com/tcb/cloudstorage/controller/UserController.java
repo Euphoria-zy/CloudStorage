@@ -31,6 +31,11 @@ public class UserController extends BaseController
     @Autowired
     private UserService userService;
 
+    /**
+     * @Description 登录功能
+     * @param user
+     * @return
+     */
     @RequestMapping("/login")
     public R login(@RequestBody User user)
     {
@@ -43,6 +48,14 @@ public class UserController extends BaseController
             return new R(false, "登录失败,用户名或密码错误!");
     }
 
+    /**
+     * @Description 注册功能
+     * @param username
+     * @param password
+     * @param email
+     * @param checkCode
+     * @return
+     */
     @RequestMapping("/register")
     public R register(String username, String password, String email, String checkCode)
     {
@@ -59,6 +72,13 @@ public class UserController extends BaseController
         }
     }
 
+    /**
+     * @Description 找回密码功能
+     * @param username
+     * @param newPwd
+     * @param checkCode
+     * @return
+     */
     @RequestMapping("/forgetPwd")
     public R forgetPwd(String username, String newPwd, String checkCode)
     {
@@ -78,7 +98,12 @@ public class UserController extends BaseController
             return new R(false, "验证码错误，请重新输入!");
     }
 
-    //注册验证码
+    /**
+     * @Description 获取注册验证码
+     * @param username
+     * @param email
+     * @return
+     */
     @RequestMapping("/getRegisterCode")
     public R sendRegisterCode(String username, String email)
     {
@@ -103,7 +128,11 @@ public class UserController extends BaseController
         return new R(true, "验证码发送成功!");
     }
 
-    //找回密码验证码
+    /**
+     * @Description 获取找回密码验证码
+     * @param username
+     * @return
+     */
     @RequestMapping("/getChangePwdCode")
     public R sendChangePwdCode(String username)
     {
