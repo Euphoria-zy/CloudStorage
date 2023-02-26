@@ -26,6 +26,7 @@ export default {
     }
 }
 </script>
+
 <style scoped>
 header {
     height: 55px;
@@ -33,7 +34,9 @@ header {
     padding: 0 24px;
 }
 
-.top-flex-container, .header-left, .header-right  {
+.top-flex-container,
+.header-left,
+.header-right {
     display: flex;
     align-items: center;
 }
@@ -47,6 +50,7 @@ header {
     justify-content: space-between;
     min-width: 156px;
 }
+
 .header-center {
     flex: 1 100px;
     min-width: 100px;

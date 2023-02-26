@@ -419,7 +419,7 @@ export default {
 
  .msgBottom {
      font-size: 12px;
-     padding-top: 250px;
+     padding-top: 220px;
      text-align: center;
  }
 
