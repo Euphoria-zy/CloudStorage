@@ -13,23 +13,20 @@
                         <div class="sideBar">
                             <SideBar :pageIndex="pageIndex"></SideBar>
                         </div>
-                        <div class="sideBar-menu">
+                        <div class="sideBar-menu greyColor">
                             <el-col>
-                                <el-menu 
-                                    class="el-menu-vertical-demo"
-                                    @open="handleOpen"
-                                    @close="handleClose"
+                                <el-menu class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose"
                                     :default-active="$route.path" router>
                                     <el-sub-menu index="1">
                                         <template #title index="/index/files">
                                             <span>全部文件</span>
                                         </template>
                                         <el-menu-item-group>
-                                            <el-menu-item index="/index/document">文档</el-menu-item>
-                                            <el-menu-item index="/index/video">视频</el-menu-item>
-                                            <el-menu-item index="/index/music">音乐</el-menu-item>
-                                            <el-menu-item index="/index/other">其他</el-menu-item>
-                                            <el-menu-item index="/index/image">图片</el-menu-item>
+                                            <el-menu-item class="greyColor" index="/index/document">文档</el-menu-item>
+                                            <el-menu-item class="greyColor" index="/index/video">视频</el-menu-item>
+                                            <el-menu-item class="greyColor" index="/index/music">音乐</el-menu-item>
+                                            <el-menu-item class="greyColor" index="/index/other">其他</el-menu-item>
+                                            <el-menu-item class="greyColor" index="/index/image">图片</el-menu-item>
                                         </el-menu-item-group>
                                     </el-sub-menu>
                                 </el-menu>
@@ -44,7 +41,6 @@
             </el-row>
         </el-main>
     </el-container>
-    
 </template>
 
 <script>
@@ -78,37 +74,48 @@ export default {
 }
 </script>
 <style scoped>
-    .el-main {
-        padding: 10px !important;
-    }
-    .full-container {
-        width: 100%;
-        height: 100%;
-        position: fixed;
-    }
-    .full-header {
-        width: 100%;
-        height: fit-content;
-    }
-    .full-body {
-        width: 100%;
-        height: 600px;
-        margin-top: 5px;
-    }
-    .body-left {
-        width: 18%;
-        height: 100%;
-    }
-    .body-right {
-        width: 82%;
-        height: 622px;
-    }
-    .sideBar {
-        width: 32%;
-        height: 600px;
-    }
-    .sideBar-menu {
-        width: 60%;
-        height: 600px;
-    }
-</style>
+.el-main {
+    padding: 10px !important;
+}
+
+.full-container {
+    width: 100%;
+    height: 100%;
+    position: fixed;
+}
+
+.full-header {
+    width: 100%;
+    height: fit-content;
+    padding-left: 0px;
+    padding-right: 0px;
+}
+
+.full-body {
+    width: 100%;
+    height: 600px;
+    margin-top: 5px;
+}
+
+.body-left {
+    width: 300px;
+    height: 100%;
+}
+
+.body-right {
+    width: calc(100% - 300px);
+    height: 622px;
+}
+
+.sideBar {
+    width: 100px;
+    height: 600px;
+}
+
+.sideBar-menu {
+    width: 180px;
+    height: 600px;
+}
+.greyColor{
+    background-color:rgb(249, 250, 251);
+}</style>
