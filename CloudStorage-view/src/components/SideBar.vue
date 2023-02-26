@@ -1,8 +1,8 @@
 <template>
     <div class="flex-container">
         <el-col>
-            <el-menu class="el-menu-vertical-demo">
-                <el-menu-item index="1">
+            <el-menu class="el-menu-vertical-demo" :default-active="$route.path" router>
+                <el-menu-item index="/index">
                     <el-col>
                             <div class="menu-image" v-if="pageIndex == 1">
                                 <img src="../assets/sidebar/index-active.png" />
@@ -35,9 +35,12 @@
                         <div class="menu-title"><span>关于我们</span></div>
                     </el-col>
                 </el-menu-item>
-                <el-menu-item index="4">
+                <el-menu-item index="/viewLog">
                     <el-col>
-                            <div class="menu-image"></div>
+                            <div class="menu-image" v-if="pageIndex == 4">
+                            </div>
+                            <div class="menu-image" v-else>
+                            </div>
                             <div class="menu-title"><span>日志记录</span></div>
                     </el-col>
                 </el-menu-item>

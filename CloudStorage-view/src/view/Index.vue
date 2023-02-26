@@ -18,8 +18,10 @@
                                 <el-menu class="el-menu-vertical-demo" @open="handleOpen" @close="handleClose"
                                     :default-active="$route.path" router>
                                     <el-sub-menu index="1">
-                                        <template #title index="/index/files">
-                                            <span>全部文件</span>
+                                        <template #title>
+                                            <RouterLink to="/index/files">
+                                                <span>&nbsp;&nbsp;&nbsp;&nbsp;全 部 文 件&nbsp;&nbsp;</span>
+                                            </RouterLink>
                                         </template>
                                         <el-menu-item-group>
                                             <el-menu-item class="greyColor" index="/index/document">文档</el-menu-item>
@@ -74,16 +76,15 @@ export default {
 }
 </script>
 <style scoped>
-.el-main {
-    padding: 10px !important;
-}
-
-.full-container {
-    width: 100%;
-    height: 100%;
-    position: fixed;
-}
-
+    .el-main {
+        padding: 10px !important;
+    }
+    .full-container {
+        width: 100%;
+        height: 100%;
+        position: fixed;
+    }
+    
 .full-header {
     width: 100%;
     height: fit-content;
@@ -118,4 +119,5 @@ export default {
 }
 .greyColor{
     background-color:rgb(249, 250, 251);
-}</style>
+}
+</style>

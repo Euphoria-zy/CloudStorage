@@ -171,27 +171,29 @@ export default {
             });
         },
         deleteLog(logId) {
+            let that = this;
             var params = new URLSearchParams();
             params.append("logId", logId);
             API.deleteLog(params).then(
                 function(res){
                     if (res.flag) {
-                        this.$message({ message: res.msg, type: "success" });
-                        this.refresh();
+                        that.$message({ message: res.msg, type: "success" });
+                        that.refresh();
                     } else {
-                        this.$message.error(res.msg);
+                        that.$message.error(res.msg);
                     }
                 }
             )
         },
         clearLog() {
+            let that = this;
             API.clearLog().then(
                 function(res){
                     if (res.flag) {
-                        this.$message({ message: res.msg, type: "success" });
-                        this.refresh();
+                        that.$message({ message: res.msg, type: "success" });
+                        that.refresh();
                     } else {
-                        this.$message.error(res.msg);
+                        that.$message.error(res.msg);
                     }
                 }
             )

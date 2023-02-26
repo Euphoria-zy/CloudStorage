@@ -100,6 +100,11 @@ public class SystemController extends BaseController
         return new R(true, "文件列表加载成功", map);
     }
 
+    /**
+     * @Description 按照文件类型获取文件(1-文档doc, 2-图片image,  3-视频video，4-音乐music, 5-其他other)
+     * @param fileType
+     * @return
+     */
     @RequestMapping("/getFileByType")
     public R getFileByType(Integer fileType)
     {

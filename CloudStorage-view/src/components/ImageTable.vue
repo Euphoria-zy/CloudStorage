@@ -52,7 +52,11 @@
                         <div class="demo-image__preview">
                             <el-image
                                     style="width: 32px; height: 32px"
-                                    :src="scope.row.fileImage">
+                                    :src="scope.row.fileImage"
+                                    :preview-src-list="srcList"
+                                    preview-teleported="true"
+                                    hide-on-click-modal="true"
+                                    @click="viewImage(scope.row.fileImage)">
                             </el-image>
                         </div>
                     </template>
@@ -154,8 +158,9 @@
                                 </el-image>
                             </template>
                         </el-table-column>
-                        <el-table-column property="folderName" label="文件名" width="80"></el-table-column>
+                        <el-table-column property="folderName" label="文件名" width="400"></el-table-column>
                     </el-table>
+                    <el-divider />
                     <div slot="footer" class="dialog-footer">
                         <el-button @click="copyDialogTableVisible = false" round>取 消</el-button>
                         <el-button type="primary" @click="copyFileOrFolder(nowCopyFolder.folderId)" round>复制到此处</el-button>
@@ -185,7 +190,7 @@
                     </el-breadcrumb>
                     <el-divider></el-divider>
                     <el-table :data="folderData" :show-header="false" @row-dblclick="handleDblClick">
-                        <el-table-column label="图标" width="50">
+                        <el-table-column label="图标" width="80">
                             <template>
                                 <el-image
                                     style="width: 32px; height: 32px"
@@ -193,8 +198,9 @@
                                 </el-image>
                             </template>
                         </el-table-column>
-                        <el-table-column property="folderName" label="文件名" width="80"></el-table-column>
+                        <el-table-column property="folderName" label="文件名" width="400"></el-table-column>
                     </el-table>
+                    <el-divider />
                     <div slot="footer" class="dialog-footer">
                         <el-button @click="moveDialogTableVisible = false" round>取 消</el-button>
                         <el-button type="primary" @click="moveFileOrFolder(nowCopyFolder.folderId)" round>移动到此处</el-button>
@@ -210,7 +216,7 @@ import api from '../api/index.js';
 import {Delete, Edit, Download, Share, Rank, CopyDocument,} from '@element-plus/icons-vue';
 import $ from "jquery";
 export default {
-    name: "DocumentTable",
+    name: "ImageTable",
     components: {
         Delete, Edit, Download, Share, Rank, CopyDocument
     },
@@ -227,13 +233,16 @@ export default {
             copyAndMoveId: null,
             operateType: null,
             initUrl: "https://img.51miz.com/Element/00/38/10/50/ed73a715_E381050_ba39adab.png",
+            srcList: [
+                'https://fuss10.elemecdn.com/8/27/f01c15bb73e1ef3793e64e6b7bbccjpeg.jpeg',
+            ]
         }
     },
     created(){
-        this.getAll(3);
+        this.getAll();
     },
     methods: {
-        getAll(fileType){
+        getAll(){
             //发送异步post请求
             let that = this;
             var params = new URLSearchParams();
@@ -252,7 +261,7 @@ export default {
         uploadSuccess(res){
             if (res.flag){
                 this.$message({message: res.msg, type:"success"});
-                this.getAll(3);
+                this.getAll();
             }else {
                 this.$message.error(res.msg);
             }
@@ -271,15 +280,13 @@ export default {
             let that = this;
             var file = event.target.files[0];
             var formData = new FormData();
-            var nowFolderId = parseInt($('#nowF').html());
             formData.append("file",file);
-            formData.append("nowFolderId",nowFolderId);
+            formData.append("nowFolderId",0);
             API.uploadFile(formData).then(
                 function(res){
                     if (res.flag){
                         that.$message({message: res.msg, type:"success"});
-                        console.log(res.msg);
-                        that.getAll(3);
+                        that.getAll();
                         $("#uploadFile").val('');
                     }else{
                         that.$message.error(res.msg);
@@ -291,24 +298,27 @@ export default {
             let that = this;
             var files = event.target.files;
             var formData = new FormData();
-            var nowFolderId = parseInt($('#nowF').html());
             for (var i = 0; i < files.length; i++) {
                 // "file"是后台接口的参数名
                 formData.append("file", files[i]);
             }
-            formData.append("nowFolderId",nowFolderId);
+            formData.append("nowFolderId",0);
             API.uploadFolder(formData).then(
                 function(res){
                     if (res.flag){
                         that.$message({message: res.msg, type:"success"});
                         console.log(res.msg);
-                        that.getAll(1);
+                        that.getAll();
                         $("#uploadFolder").val('');
                     }else{
                         that.$message.error(res.msg);
                     }
                 }
             )
+        },
+        viewImage(fileImage) {
+            this.srcList = [];
+            this.srcList.push(fileImage);
         },
         handleDblClick(row){
             this.enterFolder(row.folderId);
@@ -366,7 +376,7 @@ export default {
                     }
                 }
             )
-            this.getAll(1);
+            this.getAll();
         },
         handleEdit(row){
             var hint,inputErrorMsg, inputRule, inputValue;
@@ -387,14 +397,10 @@ export default {
                 cancelButtonText: '取消',
                 inputPattern: inputRule,
                 inputErrorMessage: inputErrorMsg,
-                inputValue: inputValue,
-                callback: function (action, instance) {
-                    if (action == 'confirm'){
-                        that.editFileName(row.fileId, instance.inputValue, row.folderId);
-                    }
-                }
+                inputValue: inputValue
             }).then(({ value }) => {
                 console.log(value);
+                this.editFileName(row.fileId, instance.inputValue, row.folderId);
             }).catch(() => {
                 this.$message({
                     type: 'info',
@@ -413,7 +419,7 @@ export default {
                 function(res){
                     if (res.flag){
                         that.$message({message: res.msg, type:"success"});
-                        that.getAll(nowFolderId);
+                        that.getAll();
                     }else {
                         that.$message.error(res.msg);
                     }
@@ -439,15 +445,16 @@ export default {
 
         },
         deleteFile(fileId, nowFolderId){
+            let that = this;
             var params = new URLSearchParams();
             params.append("fileId",fileId);
             API.deleteFile(params).then(
                 function(res){
                     if (res.flag){
-                        this.$message({message: res.msg, type:"success"});
-                        this.getAll(nowFolderId);
+                        that.$message({message: res.msg, type:"success"});
+                        that.getAll();
                     }else {
-                        this.$message.error(res.msg);
+                        that.$message.error(res.msg);
                     }
                 }
             )
@@ -468,23 +475,25 @@ export default {
         },
         enterFolder(nowFolderId){
             //发送异步post请求
+            let that = this;
             var params = new URLSearchParams();
             params.append("nowFolderId",nowFolderId);
             API.enterFolder(params).then(
                 function(res){
                     if (res.flag){
-                        this.$message({message: res.msg, type:"success"});
-                        this.folderData = res.data.folderData;
-                        this.nowCopyFolder = res.data.nowFolder;
-                        this.folderLevel = res.data.location;
+                        that.$message({message: res.msg, type:"success"});
+                        that.folderData = res.data.folderData;
+                        that.nowCopyFolder = res.data.nowFolder;
+                        that.folderLevel = res.data.location;
                     }else{
-                        this.$message.error(res.msg);
+                        that.$message.error(res.msg);
                     }
                 }
             )
         },
         copyFileOrFolder(parentFolderId){
             //发送异步post请求
+            let that = this;
             this.copyDialogTableVisible = false;
             var params = new URLSearchParams();
             params.append("operateType",this.operateType);
@@ -493,10 +502,10 @@ export default {
             API.copyFileOrFolder(params).then(
                 function(res){
                     if (res.flag){
-                        this.$message({message: res.msg, type:"success"});
-                        this.getAll(1);
+                        that.$message({message: res.msg, type:"success"});
+                        that.getAll();
                     }else{
-                        this.$message.error(res.msg);
+                        that.$message.error(res.msg);
                     }
                 }
             )
@@ -517,6 +526,7 @@ export default {
         },
         moveFileOrFolder(parentFolderId){
             //发送异步post请求
+            let that = this;
             this.moveDialogTableVisible = false;
             var params = new URLSearchParams();
             params.append("operateType",this.operateType);
@@ -525,10 +535,10 @@ export default {
             API.moveFileOrFolder(params).then(
                 function(res){
                    if (res.flag){
-                        this.$message({message: res.msg, type:"success"});
-                        this.getAll(1);
+                        that.$message({message: res.msg, type:"success"});
+                        that.getAll();
                     }else{
-                        this.$message.error(res.msg);
+                        that.$message.error(res.msg);
                     } 
                 }
             )

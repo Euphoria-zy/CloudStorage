@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
+import javax.jws.soap.SOAPBinding;
 import java.io.IOException;
 import java.net.URL;
 import java.text.ParseException;
@@ -457,7 +458,7 @@ public class FunctionController extends BaseController
     }
 
     /**
-     * @Description 重命名文件夹
+     * @Description 重命名文件夹，级联更新下面的所有文件路径信息
      * @param folderId
      * @param newFolderName
      * @return
@@ -477,6 +478,7 @@ public class FunctionController extends BaseController
             folder.setFolderName(newFolderName);
             boolean b1 = folderService.updateFolder(folder);
             if (b1){
+                deepRenameFolder(folder);
                 userLog.setOperationSuccess(true);
                 logService.recordLog(userLog);
                 return new R(true, "文件夹重命名成功!");
@@ -485,6 +487,35 @@ public class FunctionController extends BaseController
                 logService.recordLog(userLog);
                 return new R(false, "文件夹重命名失败!");
             }
+        }
+    }
+
+
+    /**
+     * @Description 级联更新文件夹下面的文件
+     * @param folder
+     */
+    public void deepRenameFolder(Folder folder)
+    {
+        String folderPath = folder.getFolderPath()+folder.getFolderName()+"/";
+        List<UserFile> fileList = fileService.getUserFileByParentFolderId(folder.getFolderId());
+        for (UserFile userFile: fileList) {
+            String sourceKey = userFile.getFilePath()+userFile.getFileName()+userFile.getPostfix();
+            String destinationKey = folderPath +userFile.getFileName()+userFile.getPostfix();
+            boolean b1 = COSUtils.copyFile(sourceKey, destinationKey);
+            if (b1) {
+                boolean b2 = COSUtils.deleteFile(sourceKey);
+                if (b2) {
+                    userFile.setFilePath(folderPath);
+                    fileService.updateUserFileById(userFile);
+                }
+            }
+        }
+        List<Folder> folders = folderService.getFolderByParentFolderId(folder.getFolderId());
+        for (Folder f: folders) {
+            f.setFolderPath(folderPath);
+            folderService.updateFolder(f);
+            deepRenameFolder(f);
         }
     }
 
@@ -681,9 +712,9 @@ public class FunctionController extends BaseController
                 logService.recordLog(userLog);
                 return new R(true, "复制文件失败，当前目录已存在同名文件!");
             }else {
-                UserFile file = UserFile.builder().fileName(userFile.getFileName())
+                UserFile file = UserFile.builder().fileName(userFile.getFileName()).fileImage(userFile.getFileImage())
                         .fileStoreId(userFile.getFileStoreId()).fileSize(userFile.getFileSize())
-                        .fileType(userFile.getFileType()).filePath(folderPath)
+                        .fileType(userFile.getFileType()).filePath(folderPath).unit(userFile.getUnit())
                         .parentFolderId(parentFolderId).uploadTime(new Date())
                         .downloadCount(0).postfix(userFile.getPostfix()).build();
                 String sourceKey = userFile.getFilePath()+userFile.getFileName()+userFile.getPostfix();
@@ -710,14 +741,21 @@ public class FunctionController extends BaseController
             }
         }
     }
-    //把oldFolder下的文件拷贝到newFolder
+
+    /**
+     * @Description 把oldFolder下的文件拷贝到newFolder
+     * @param newFolder
+     * @param oldFolder
+     * @param store
+     * @param deep
+     */
     public void copyFolder(Folder newFolder, Folder oldFolder, FileStore store, int deep)
     {
         //拷贝文件
        List<UserFile> files = fileService.getUserFileByParentFolderId(oldFolder.getFolderId());
        for (UserFile file: files){
-           UserFile userFile = UserFile.builder().fileName(file.getFileName())
-                   .fileStoreId(file.getFileStoreId()).fileSize(file.getFileSize())
+           UserFile userFile = UserFile.builder().fileName(file.getFileName()).fileImage(file.getFileImage())
+                   .fileStoreId(file.getFileStoreId()).fileSize(file.getFileSize()).unit(file.getUnit())
                    .fileType(file.getFileType()).filePath(newFolder.getFolderPath()+newFolder.getFolderName()+"/")
                    .parentFolderId(newFolder.getFolderId()).uploadTime(new Date())
                    .downloadCount(0).postfix(file.getPostfix()).build();
@@ -735,6 +773,7 @@ public class FunctionController extends BaseController
        //拷贝文件夹
        List<Folder> folderList = folderService.getFolderByParentFolderId(oldFolder.getFolderId());
        for (Folder folder: folderList){
+           //文件夹复制到自身目录下，跳过本身
            if (deep == 0){
                if (folder.getFolderName().equals(newFolder.getFolderName())){
                    continue;
