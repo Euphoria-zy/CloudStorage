@@ -31,7 +31,7 @@
                                 </el-form-item>
                                 <el-form-item>
                                     <el-link :underline="false" type="primary">
-                                        <a class="fgtPwdBtn" @click="forgetPwdDialogVisible = true">忘记密码</a>
+                                        <a class="fgtPwdBtn" @click="forgetPwdDialog = true">忘记密码</a>
                                     </el-link>
                                     <el-button type="primary" class="loginBtn" @click="login"
                                         :loading="loading">登录</el-button>
@@ -70,32 +70,42 @@
                         </el-tab-pane>
                     </el-tabs>
                 </el-col>
-                <!-- 忘记密码弹窗 -->
-                <el-dialog title="修改密码" v-model="forgetPwdDialogVisible" width="400px" center>
-                    <el-form ref="ForgetPwdForm" :model="changePwd" :rules="rules">
-                        <el-form-item class="gapBig" prop="username">
-                            <el-input placeholder="用户名：" v-model="changePwd.username" />
-                        </el-form-item>
-                        <el-form-item class="gapBig" prop="password">
-                            <el-input placeholder="新密码：" type="password" v-model="changePwd.password" />
-                        </el-form-item>
-                        <el-form-item class="gapBig" prop="confirmPassword">
-                            <el-input placeholder="确认密码：" type="password" v-model="changePwd.confirmPassword" />
-                        </el-form-item>
-                        <el-form-item class="gapBig" prop="emailCheckCode">
-                            <el-input placeholder="验证码：" type="password" v-model="changePwd.emailCheckCode"
-                                class="codeInput2" />
-                            <el-button class="codeButton" type="primary" :disabled="!canClick" @click="getForgetPwdCode"
-                                plain>{{ getCode }}</el-button>
-                        </el-form-item>
-                    </el-form>
-                    <span slot="footer" class="dialog-footer">
-                        <el-button style="width:100px;" @click="forgetPwdDialogVisible = false">取 消</el-button>
-                        <el-button style="width:100px;margin-left: 150px;" type="primary" @click="forgetPwd"
-                            :loading="loading">修改密码</el-button>
-                    </span>
-                </el-dialog>
             </el-row>
+            <!-- 忘记密码弹窗 -->
+            <el-dialog title="忘记密码" v-model="forgetPwdDialog" width="400px" center>
+                <el-form ref="ForgetPwdForm" :model="changePwd" :rules="rules">
+                    <el-form-item class="gapBig" prop="username">
+                        <el-input placeholder="用户名：" v-model="changePwd.username" />
+                    </el-form-item>
+                    <el-form-item class="gapBig" prop="emailCheckCode">
+                        <el-input placeholder="验证码：" type="password" v-model="changePwd.emailCheckCode"
+                            class="codeInput2" />
+                        <el-button class="codeButton" type="primary" :disabled="!canClick" @click="getForgetPwdCode"
+                            plain>{{ getCode }}</el-button>
+                    </el-form-item>
+                </el-form>
+                <span slot="footer" class="dialog-footer">
+                    <el-button style="width:100px;" @click="forgetPwdDialog = false">取 消</el-button>
+                    <el-button style="width:100px;margin-left: 150px;" type="primary"
+                        @click="forgetPwdDialog = false;changePwdDialog = true">修改密码</el-button>
+                </span>
+            </el-dialog>
+            <!-- 修改密码弹窗 -->
+            <el-dialog title="修改密码" v-model="changePwdDialog" width="400px" center>
+                <el-form ref="ForgetPwdForm" :model="changePwd" :rules="rules">
+                    <el-form-item class="gapBig" prop="password">
+                        <el-input placeholder="新密码：" type="password" v-model="changePwd.password" />
+                    </el-form-item>
+                    <el-form-item class="gapBig" prop="confirmPassword">
+                        <el-input placeholder="确认密码：" type="password" v-model="changePwd.confirmPassword" />
+                    </el-form-item>
+                </el-form>
+                <span slot="footer" class="dialog-footer">
+                    <el-button style="width:100px;" @click="changePwdDialog = false">取 消</el-button>
+                    <el-button style="width:100px;margin-left: 150px;" type="primary" @click="forgetPwd"
+                        :loading="loading">修改密码</el-button>
+                </span>
+            </el-dialog>
             <p class="msgBottom">版权所有@20xx-20xx | 团队：The Coding Boys | 联系方式：********</p>
         </el-main>
     </el-container>
@@ -144,7 +154,8 @@ export default {
             loading: false,
             getCode: "获取验证码",
             canClick: true,
-            forgetPwdDialogVisible: false,
+            forgetPwdDialog: false,
+            changePwdDialog: false,
             loginUser: {
                 username: "",
                 password: "",
@@ -268,7 +279,7 @@ export default {
                             that.loading = false;
                             console.log(res);
                             if (res.flag) {
-                                that.forgetPwdDialogVisible = false;
+                                that.changePwdDialog = false;
                                 that.$message({ message: res.msg, type: "success" });
                             } else {
                                 that.$message.error(res.msg);
