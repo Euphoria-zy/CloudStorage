@@ -2,14 +2,14 @@
     <header>
         <div class="top-flex-container">
             <div class="header-left">
-                <img src="../assets/product_logo.jpg" alt="产品logo" height="30">
+                <img src="../../assets/product_logo.jpg" alt="产品logo" height="30">
                 <p>极速云盘</p>
             </div>
             <!-- 将网盘 logo 和用户信息隔开 -->
             <div class="header-center"></div>
             <div class="header-right">
                 <el-dropdown @command="handleImage">
-                    <el-avatar :src="headImage"></el-avatar>
+                    <el-avatar :src="headImage" style="margin-right: 10px;"></el-avatar>
                     <template #dropdown>
                         <el-dropdown-menu>
                             <el-dropdown-item command="1" style="z-index: 1;position: relative">
@@ -22,14 +22,14 @@
                     </template>
                 </el-dropdown>
                 <p>{{ userName }}</p>
-                <el-button link @click="loginOut">退出登录</el-button>
+                <el-button link @click="loginOut" style="margin-left: 25px;">退出登录</el-button>
             </div>
         </div>
     </header>
 </template>
 <script>
-import API from "../api/api_user";
-import headImage from "@/assets/1.jpg";
+import API from "../../api/api_user";
+import headImage from "../../assets/1.jpg";
 import $ from "jquery";
 export default {
     name: "TopBar",

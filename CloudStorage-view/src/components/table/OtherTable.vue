@@ -1,106 +1,64 @@
 <template>
     <el-container>
-        <el-header >
-            <el-row>
-                <el-col :span="3">
-                    <el-upload class="upload-demo" action="${api.baseurl}/uploadFile" multiple
-                        :data="{ 'nowFolderId': nowFolderId }" :on-success="uploadSuccess" :limit="3">
-                        <el-dropdown @command="handleCommand">
-                            <el-button type="success" class="el-dropdown-link">
-                                <el-icon>
-                                    <Upload />
-                                </el-icon>
-                                <span>上传</span>
-                            </el-button>
-                            <template #dropdown>
-                                <el-dropdown-menu>
-                                    <el-dropdown-item command="1" style="z-index: 1;position: relative">
-                                        <span>上传文件</span>
-                                        <input type="file" title="选择文件" name="file" id="uploadFile" @change="uploadFile"
-                                            accept="*/*" multiple hidden
-                                            style="z-index:-1;position:absolute;top:0;left:0;width:100%;height:100%;opacity: 0; cursor: pointer">
-                                    </el-dropdown-item>
-                                    <el-dropdown-item command="2" style="z-index: 1;position: relative">
-                                        <span>上传文件夹</span>
-                                        <input type="file" title="选择文件夹" id="uploadFolder" name="folder"
-                                            @change="uploadFolder" accept="*/*" multiple hidden webkitdirectory
-                                            style="z-index:-1;position:absolute;top:0;left:0;width:100%;height:100%;opacity: 0; cursor:pointer">
-                                    </el-dropdown-item>
-                                </el-dropdown-menu>
-                            </template>
-                        </el-dropdown>
-                    </el-upload>
-                </el-col>
-                <el-col :span="3">
-                    <el-button type="primary" @click="addFolderFormVisible = true">
+        <!--table head-->
+        <el-header>
+            <el-upload class="upload-demo" action="${api.baseurl}/uploadFile" multiple :data="{ 'nowFolderId': nowFolderId }"
+                :on-success="uploadSuccess" :limit="3">
+                <el-dropdown @command="handleCommand">
+                    <el-button type="success" class="el-dropdown-link">
                         <el-icon>
-                            <FolderAdd />
+                            <Upload />
                         </el-icon>
-                        <span>新建文件夹</span>
+                        <span>上传</span>
                     </el-button>
-                </el-col>
-            </el-row>
+                    <template #dropdown>
+                        <el-dropdown-menu>
+                            <el-dropdown-item command="1" style="z-index: 1;position: relative">
+                                <span>上传文件</span>
+                                <input type="file" title="选择文件" name="file" id="uploadFile" @change="uploadFile"
+                                    accept="*/*" multiple hidden
+                                    style="z-index:-1;position:absolute;top:0;left:0;width:100%;height:100%;opacity: 0; cursor: pointer">
+                            </el-dropdown-item>
+                            <el-dropdown-item command="2" style="z-index: 1;position: relative">
+                                <span>上传文件夹</span>
+                                <input type="file" title="选择文件夹" id="uploadFolder" name="folder" @change="uploadFolder"
+                                    accept="*/*" multiple hidden webkitdirectory
+                                    style="z-index:-1;position:absolute;top:0;left:0;width:100%;height:100%;opacity: 0; cursor:pointer">
+                            </el-dropdown-item>
+                        </el-dropdown-menu>
+                    </template>
+                </el-dropdown>
+            </el-upload>
+            <el-divider />
         </el-header>
+        <!--table body-->
         <el-main>
-            <el-breadcrumb separator-class="el-icon-arrow-right">
-                <transition-group>
-                    <el-breadcrumb-item :key="0">
-                        <a @click.prevent="handleLink(0)">根目录</a>
-                    </el-breadcrumb-item>
-                    <el-breadcrumb-item v-for="(item, index) in levelList" :key="item.folderId">
-                        <a @click.prevent="handleLink(item.folderId)">{{ item.folderName }}</a>
-                    </el-breadcrumb-item>
-                    <el-breadcrumb-item v-if="nowFolder.folderId != 0" :key="nowFolder.folderId">
-                        <a @click.prevent="handleLink(nowFolder.folderId)">{{ nowFolder.folderName }}</a>
-                    </el-breadcrumb-item>
-                </transition-group>
-                <el-breadcrumb-item v-if="nowFolder.folderId != 0">
-                    <a @click.prevent="handleLink(nowFolder.parentFolderId)">&nbsp;&nbsp;|&nbsp;返回上一级</a>
-                </el-breadcrumb-item>
-            </el-breadcrumb>
-
+            <h3 style="margin-top: 0px;margin-bottom: 0px;">其它文件</h3>
             <el-table id="folder-table" ref="multipleTable" :data="datalist" stripe tooltip-effect="dark"
-                style="width: 100%" @selection-change="handleSelectionChange" @row-dblclick="handleFolder">
+                style="width: 100%" @selection-change="handleSelectionChange">
                 <el-table-column type="selection" width="55">
                 </el-table-column>
                 <el-table-column width="50">
                     <template #default="scope">
-                        <div class="demo-image__preview" v-if="scope.row.fileType == 2">
-                            <el-image style="width: 32px; height: 32px" :src="scope.row.fileImage"
-                                :preview-src-list="srcList" preview-teleported="true" hide-on-click-modal="true"
-                                @click="viewImage(scope.row.fileImage)">
-                            </el-image>
-                        </div>
-                        <div class="demo-image__preview" v-else-if="scope.row.fileType == null">
-                            <el-image style="width: 32px; height: 32px" :src="initUrl">
-                            </el-image>
-                        </div>
-                        <div class="demo-image__preview" v-else>
+                        <div class="demo-image__preview">
                             <el-image style="width: 32px; height: 32px" :src="scope.row.fileImage">
                             </el-image>
                         </div>
                     </template>
                 </el-table-column>
                 <el-table-column label="名称" width="120">
-                    <template #default="scope">{{ scope.row.folderName ? scope.row.folderName : scope.row.fileName }}</template>
+                    <template #default="scope">{{ scope.row.fileName }}</template>
                 </el-table-column>
                 <el-table-column label="类型" width="120">
                     <template #default="scope">
-                        <i v-if="scope.row.fileType == 1">文档</i>
-                        <i v-else-if="scope.row.fileType == 2">图片</i>
-                        <i v-else-if="scope.row.fileType == 3">视频</i>
-                        <i v-else-if="scope.row.fileType == 4">音乐</i>
-                        <i v-else-if="scope.row.fileType == 5">其它</i>
-                        <i v-else>文件夹</i>
+                        其它
                     </template>
                 </el-table-column>
                 <el-table-column label="大小" width="120">
-                    <template
-                        #default="scope">{{ scope.row.fileSize ? scope.row.fileSize + scope.row.unit : scope.row.fileSize == 0 ? 0 : '--' }}</template>
+                    <template #default="scope">{{ scope.row.fileSize + scope.row.unit }}</template>
                 </el-table-column>
                 <el-table-column label="下载次数" width="120">
-                    <template #default="scope">{{ scope.row.downloadCount ? scope.row.downloadCount : scope.row.downloadCount ==
-                        0 ? 0 : '--' }}</template>
+                    <template #default="scope">{{ scope.row.downloadCount }}</template>
                 </el-table-column>
                 <el-table-column label="添加时间" width="150" :formatter="formatDate">
                 </el-table-column>
@@ -155,30 +113,6 @@
                 </el-table-column>
             </el-table>
 
-            <span id="nowF" style="display: none" v-text="nowFolder.folderId"></span>
-            <span id="preF" style="display: none" v-text="nowFolder.parentFolderId"></span>
-
-            <!--创建文件夹dialog-->
-            <div id="addFolderForm">
-                <el-dialog title="新建文件夹" v-model="addFolderFormVisible" width="400px">
-                    <el-form>
-                        <el-form-item>
-                            <el-input name="newFolderName" v-model="newFolderName" placeholder="请输入文件名">
-                                <template #prefix>
-                                    <el-icon class="el-input__icon">
-                                        <FolderAdd />
-                                    </el-icon>
-                                </template>
-                            </el-input>
-                        </el-form-item>
-                    </el-form>
-                    <div slot="footer" class="dialog-footer">
-                        <el-button @click="addFolderFormVisible = false" round>取 消</el-button>
-                        <el-button type="primary" @click="addFolder()" round>确 定</el-button>
-                    </div>
-                </el-dialog>
-            </div>
-
             <!--复制文件或文件夹dialog-->
             <div id="copyFolderOrFileDialog">
                 <el-dialog title="复制到" v-model="copyDialogTableVisible">
@@ -201,9 +135,11 @@
                     </el-breadcrumb>
                     <el-divider></el-divider>
                     <el-table :data="folderData" :show-header="false" @row-dblclick="handleDblClick">
-                        <el-table-column label="图标" width="80">
-                            <el-image style="width: 32px; height: 32px" :src="initUrl">
-                            </el-image>
+                        <el-table-column label="图标" width="50">
+                            <template>
+                                <el-image style="width: 32px; height: 32px" :src="initUrl">
+                                </el-image>
+                            </template>
                         </el-table-column>
                         <el-table-column property="folderName" label="文件名" width="400"></el-table-column>
                     </el-table>
@@ -237,9 +173,11 @@
                     </el-breadcrumb>
                     <el-divider></el-divider>
                     <el-table :data="folderData" :show-header="false" @row-dblclick="handleDblClick">
-                        <el-table-column label="图标" width="55">
-                            <el-image style="width: 28px; height: 28px" :src="initUrl">
-                            </el-image>
+                        <el-table-column label="图标" width="80">
+                            <template>
+                                <el-image style="width: 32px; height: 32px" :src="initUrl">
+                                </el-image>
+                            </template>
                         </el-table-column>
                         <el-table-column property="folderName" label="文件名" width="400"></el-table-column>
                     </el-table>
@@ -254,12 +192,12 @@
     </el-container>
 </template>
 <script>
-import API from '../api/api_file';
-import api from '../api/index.js';
+import API from '../../api/api_file';
+import api from '../../api/index.js';
 import { Delete, Edit, Download, Share, Rank, CopyDocument, } from '@element-plus/icons-vue';
 import $ from "jquery";
 export default {
-    name: "FileList",
+    name: "OtherTable",
     components: {
         Delete, Edit, Download, Share, Rank, CopyDocument
     },
@@ -267,19 +205,8 @@ export default {
         return {
             visible: false,
             datalist: [],
-            levelList: [],
-            nowFolder: {
-                folderId: 0,
-                folderName: '',
-                parentFolderId: 0,
-                fileStoreId: 0,
-                folderPath: '',
-                createTime: null
-            },
-            addFolderFormVisible: false,
             copyDialogTableVisible: false,
             moveDialogTableVisible: false,
-            newFolderName: '',
             nowFolderId: null,
             folderData: [],
             folderLevel: [],
@@ -287,42 +214,32 @@ export default {
             copyAndMoveId: null,
             operateType: null,
             initUrl: "https://img.51miz.com/Element/00/38/10/50/ed73a715_E381050_ba39adab.png",
-            srcList: [
-                'https://fuss10.elemecdn.com/8/27/f01c15bb73e1ef3793e64e6b7bbccjpeg.jpeg',
-            ]
         }
     },
     created() {
-        this.getAll(0);
+        this.getAll();
     },
     methods: {
-        getAll(folderId) {
+        getAll() {
             //发送异步post请求
             let that = this;
             var params = new URLSearchParams();
-            params.append("folderId", folderId);
-            API.getAll(params).then(
+            params.append("fileType", 5);
+            API.getFileByType(params).then(
                 function (res) {
                     if (res.flag) {
                         that.$message({ message: res.msg, type: "success" });
                         that.datalist = res.data.datalist;
-                        that.nowFolder = res.data.nowFolder;
-                        that.nowFolderId = that.nowFolder.folderId;
-                        that.levelList = res.data.location;
                     } else {
                         that.$message.error(res.msg);
                     }
                 }
             )
         },
-        //返回上一级
-        handleLink(folderId) {
-            this.getAll(folderId);
-        },
         uploadSuccess(res) {
             if (res.flag) {
                 this.$message({ message: res.msg, type: "success" });
-                this.getAll(this.nowFolderId);
+                this.getAll();
             } else {
                 this.$message.error(res.msg);
             }
@@ -341,15 +258,13 @@ export default {
             let that = this;
             var file = event.target.files[0];
             var formData = new FormData();
-            var nowFolderId = parseInt($('#nowF').html());
             formData.append("file", file);
-            formData.append("nowFolderId", nowFolderId);
+            formData.append("nowFolderId", 0);
             API.uploadFile(formData).then(
                 function (res) {
                     if (res.flag) {
                         that.$message({ message: res.msg, type: "success" });
-                        console.log(res.msg);
-                        that.getAll(nowFolderId);
+                        that.getAll();
                         $("#uploadFile").val('');
                     } else {
                         that.$message.error(res.msg);
@@ -361,61 +276,23 @@ export default {
             let that = this;
             var files = event.target.files;
             var formData = new FormData();
-            var nowFolderId = parseInt($('#nowF').html());
             for (var i = 0; i < files.length; i++) {
                 // "file"是后台接口的参数名
                 formData.append("file", files[i]);
             }
-            formData.append("nowFolderId", nowFolderId);
+            formData.append("nowFolderId", 0);
             API.uploadFolder(formData).then(
                 function (res) {
                     if (res.flag) {
                         that.$message({ message: res.msg, type: "success" });
                         console.log(res.msg);
-                        that.getAll(nowFolderId);
+                        that.getAll();
                         $("#uploadFolder").val('');
                     } else {
                         that.$message.error(res.msg);
                     }
                 }
             )
-        },
-        addFolder() {
-            let that = this;
-            var nowFolderId = parseInt($('#nowF').html());
-            var b = this.checkAddFolder(this.newFolderName);
-            if (b) {
-                this.addFolderFormVisible = false;
-                //发送异步post请求
-                var params = new URLSearchParams();
-                params.append("parentFolderId", nowFolderId);
-                params.append("folderName", this.newFolderName);
-                API.addFolder(params).then(
-                    function (res) {
-                        if (res.flag) {
-                            that.$message({ message: res.msg, type: "success" });
-                            that.getAll(nowFolderId);
-                        } else {
-                            that.$message.error(res.msg);
-                        }
-                    }
-                )
-            }
-        },
-        checkAddFolder(folderName) {
-            var nameReg = /^[\u4E00-\u9FA5A-Za-z0-9]{1,20}$/;
-            if (!nameReg.test(folderName)) {
-                this.$message.error("文件夹格式错误！【汉字、字母、数字】");
-                return false;
-            } else
-                return true;
-        },
-        handleFolder(row) {
-            if (row.fileType == null) {
-                this.getAll(row.folderId);
-            } else {
-                console.log("双击预览文件");
-            }
         },
         handleDblClick(row) {
             this.enterFolder(row.folderId);
@@ -452,40 +329,32 @@ export default {
             var minutes = this.add0(dt.getMinutes());
             return year + '-' + mouth + '-' + day + ' ' + hour + ':' + minutes;
         },
-        viewImage(fileImage) {
-            this.srcList = [];
-            this.srcList.push(fileImage);
-        },
         handleDownLoad(row) {
             let that = this;
-            if (row.fileType != null) {
-                console.log(row.fileId);
-                //发送异步post请求
-                var params = new URLSearchParams();
-                params.append("fileId", row.fileId);
-                API.downloadFile(params).then(
-                    function (res) {
-                        if (res.flag) {
-                            let link = document.createElement("a"); //创建a标签
-                            link.style.display = "none"; //使其隐藏
-                            link.href = res.data.filePath; //赋予文件下载地址
-                            link.setAttribute("download", res.data.fileName); //设置下载属性 以及文件名
-                            document.body.appendChild(link); //a标签插至页面中
-                            link.click(); //强制触发a标签事件
-                            that.$message({ message: res.msg, type: "success" });
-                        } else {
-                            that.$message.error(res.msg);
-                        }
+            console.log(row.fileId);
+            //发送异步post请求
+            var params = new URLSearchParams();
+            params.append("fileId", row.fileId);
+            API.downloadFile(params).then(
+                function (res) {
+                    if (res.flag) {
+                        let link = document.createElement("a"); //创建a标签
+                        link.style.display = "none"; //使其隐藏
+                        link.href = res.data.filePath; //赋予文件下载地址
+                        link.setAttribute("download", res.data.fileName); //设置下载属性 以及文件名
+                        document.body.appendChild(link); //a标签插至页面中
+                        link.click(); //强制触发a标签事件
+                        that.$message({ message: res.msg, type: "success" });
+                    } else {
+                        that.$message.error(res.msg);
                     }
-                )
-                var nowFolderId = parseInt($('#nowF').html());
-                that.getAll(nowFolderId);
-            } else {
-                that.$message({ message: "下载内容包含文件夹，请使用网盘客户端下载", type: "warning" });
-            }
+                }
+            )
+            this.getAll();
         },
         handleEdit(row) {
             var hint, inputErrorMsg, inputRule, inputValue;
+            var that = this;
             if (row.fileType != null) {
                 hint = "请输入文件名: ";
                 inputErrorMsg = "文件名称格式不对!";
@@ -502,15 +371,10 @@ export default {
                 cancelButtonText: '取消',
                 inputPattern: inputRule,
                 inputErrorMessage: inputErrorMsg,
-                inputValue: inputValue,
+                inputValue: inputValue
             }).then(({ value }) => {
                 console.log(value);
-                var nowFolderId = parseInt($('#nowF').html());
-                if (row.fileType != null) {
-                    this.editFileName(row.fileId, value, nowFolderId);
-                } else {
-                    this.editFolderName(row.folderId, value, nowFolderId);
-                }
+                this.editFileName(row.fileId, instance.inputValue, row.folderId);
             }).catch(() => {
                 this.$message({
                     type: 'info',
@@ -529,25 +393,7 @@ export default {
                 function (res) {
                     if (res.flag) {
                         that.$message({ message: res.msg, type: "success" });
-                        that.getAll(nowFolderId);
-                    } else {
-                        that.$message.error(res.msg);
-                    }
-                }
-            )
-        },
-        editFolderName(folderId, name, nowFolderId) {
-            let that = this;
-            //发送异步post请求
-            var params = new URLSearchParams();
-            params.append("folderId", folderId);
-            params.append("newFolderName", name);
-            params.append("parentFolderId", nowFolderId)
-            API.renameFolder(params).then(
-                function (res) {
-                    if (res.flag) {
-                        that.$message({ message: res.msg, type: "success" });
-                        that.getAll(nowFolderId);
+                        that.getAll();
                     } else {
                         that.$message.error(res.msg);
                     }
@@ -562,12 +408,7 @@ export default {
                 type: 'warning'
             }).then((action) => {
                 if (action == 'confirm') {
-                    var nowFolderId = parseInt($('#nowF').html());
-                    if (row.fileType != null) {
-                        this.deleteFile(row.fileId, nowFolderId);
-                    } else {
-                        this.deleteFolder(row.folderId, nowFolderId);
-                    }
+                    this.deleteFile(row.fileId, row.folderId);
                 }
             }).catch(() => {
                 this.$message({
@@ -585,22 +426,7 @@ export default {
                 function (res) {
                     if (res.flag) {
                         that.$message({ message: res.msg, type: "success" });
-                        that.getAll(nowFolderId);
-                    } else {
-                        that.$message.error(res.msg);
-                    }
-                }
-            )
-        },
-        deleteFolder(folderId, nowFolderId) {
-            let that = this;
-            var params = new URLSearchParams();
-            params.append("folderId", folderId);
-            APIP.deleteFolder(params).then(
-                function (res) {
-                    if (res.flag) {
-                        that.$message({ message: res.msg, type: "success" });
-                        that.getAll(nowFolderId);
+                        that.getAll();
                     } else {
                         that.$message.error(res.msg);
                     }
@@ -640,8 +466,8 @@ export default {
             )
         },
         copyFileOrFolder(parentFolderId) {
-            let that = this;
             //发送异步post请求
+            let that = this;
             this.copyDialogTableVisible = false;
             var params = new URLSearchParams();
             params.append("operateType", this.operateType);
@@ -651,7 +477,7 @@ export default {
                 function (res) {
                     if (res.flag) {
                         that.$message({ message: res.msg, type: "success" });
-                        that.getAll(parentFolderId);
+                        that.getAll();
                     } else {
                         that.$message.error(res.msg);
                     }
@@ -673,8 +499,8 @@ export default {
             this.enterFolder(0);
         },
         moveFileOrFolder(parentFolderId) {
-            let that = this;
             //发送异步post请求
+            let that = this;
             this.moveDialogTableVisible = false;
             var params = new URLSearchParams();
             params.append("operateType", this.operateType);
@@ -684,7 +510,7 @@ export default {
                 function (res) {
                     if (res.flag) {
                         that.$message({ message: res.msg, type: "success" });
-                        that.getAll(parentFolderId);
+                        that.getAll();
                     } else {
                         that.$message.error(res.msg);
                     }
@@ -698,7 +524,7 @@ export default {
 }     
 </script>
 <style scoped>
-.el-header{
-    margin-top: 10px;
+.el-header {
+    margin-top: 20px;
 }
 </style>

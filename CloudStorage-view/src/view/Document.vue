@@ -15,7 +15,7 @@
                 </div>
                 <!--body右侧文件信息-->
                 <div class="body-right">
-                    <FileTable></FileTable>
+                    <DocumentTable></DocumentTable>
                 </div>
             </el-row>
         </el-main>
@@ -25,7 +25,7 @@
 <script>
 import TopBar from '@/components/bar/TopBar.vue';
 import SideBar from '@/components/bar/SideBar.vue';
-import FileTable from '@/components/table/FileTable.vue';
+import DocumentTable from '@/components/table/DocumentTable.vue';
 import ElSubmenu from 'element-plus';
 import bus from "../bus";
 export default {
@@ -33,11 +33,11 @@ export default {
         TopBar,
         SideBar,
         ElSubmenu,
-        FileTable
+        DocumentTable
     },
     data() {
         return {
-            pageIndex: 1
+            pageIndex: 2
         }
     },
     created() {
