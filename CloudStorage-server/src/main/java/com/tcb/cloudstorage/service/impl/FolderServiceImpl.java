@@ -100,11 +100,12 @@ public class FolderServiceImpl extends ServiceImpl<FolderMapper, Folder> impleme
     }
 
     @Override
-    public Folder getFolderByPIdAndName(int parentFolderId, String folderName)
+    public Folder getFolderByPIdAndName(int parentFolderId, String folderName, int fileStoreId)
     {
         LambdaQueryWrapper<Folder> lambdaQueryWrapper = new QueryWrapper<Folder>().lambda();
         lambdaQueryWrapper.eq(Folder::getParentFolderId, parentFolderId);
         lambdaQueryWrapper.eq(Folder::getFolderName, folderName);
+        lambdaQueryWrapper.eq(Folder::getFileStoreId, fileStoreId);
         return folderMapper.selectOne(lambdaQueryWrapper);
     }
 

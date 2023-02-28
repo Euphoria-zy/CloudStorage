@@ -65,8 +65,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         User root = userMapper.selectOne(lambdaQueryWrapper);
         if (root != null) {
             String encode = passwordEncoder.encode(newPwd);
-            User user = User.builder().userId(root.getUserId()).username(username).password(encode).build();
-            userMapper.update(user, lambdaQueryWrapper);
+            root.setPassword(encode);
+            userMapper.updateById(root);
             return true;
         }
         return false;
@@ -118,6 +118,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean updateUserInfo(User user)
     {
         return userMapper.updateById(user)>0;
+    }
+
+    @Override
+    public User getUserById(int userId)
+    {
+        return userMapper.selectById(userId);
     }
 
 }

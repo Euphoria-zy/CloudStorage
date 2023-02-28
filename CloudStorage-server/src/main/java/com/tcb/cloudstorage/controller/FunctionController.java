@@ -217,7 +217,7 @@ public class FunctionController extends BaseController
             String[] fileFolder = filePath.split("/");
             firstFolderName = fileFolder[0];
             userLog.setFileFolderName(firstFolderName);
-            if (folderService.getFolderByPIdAndName(nowFolderId, firstFolderName) != null){
+            if (folderService.getFolderByPIdAndName(nowFolderId, firstFolderName, loginUser.getFileStoreId()) != null){
                 userLog.setOperationSuccess(false);
                 logService.recordLog(userLog);
                 return new R(false, "上传文件夹失败! 当前目录已存在同名文件夹: "+firstFolderName);
@@ -263,7 +263,7 @@ public class FunctionController extends BaseController
                 dateStr = dateFormat.parse(dateFormat.format(new Date()));
                 for (int i = 0; i < fileFolder.length; i++)
                 {
-                    Folder currentFolder = folderService.getFolderByPIdAndName(parentFolderId, fileFolder[i]);
+                    Folder currentFolder = folderService.getFolderByPIdAndName(parentFolderId, fileFolder[i], loginUser.getFileStoreId());
                     if (currentFolder == null){
                         Folder folder = Folder.builder().folderName(fileFolder[i])
                                 .folderPath(currentFolderPath)
@@ -374,7 +374,7 @@ public class FunctionController extends BaseController
             Folder parentFolder = folderService.getFolderById(parentFolderId);
             folderPath = parentFolder.getFolderPath() +parentFolder.getFolderName() +"/";
         }
-        if (folderService.getFolderByPIdAndName(parentFolderId, folderName) != null){
+        if (folderService.getFolderByPIdAndName(parentFolderId, folderName, loginUser.getFileStoreId()) != null){
             userLog.setOperationSuccess(false);
             return new R(false, "添加文件夹失败!当前目录已存在同名文件夹: "+folderName);
         }
@@ -467,7 +467,7 @@ public class FunctionController extends BaseController
     public R RenameFolder(@RequestParam int folderId, @RequestParam String newFolderName, @RequestParam int parentFolderId) throws ParseException
     {
         Folder folder = folderService.getFolderById(folderId);
-        Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, newFolderName);
+        Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, newFolderName, loginUser.getFileStoreId());
         UserLog userLog = UserLog.builder().userId(loginUser.getUserId())
                 .fileFolderName(folder.getFolderName()).isFile(false).operationType(6).build();
         if (folderByPIdAndName != null){
@@ -683,7 +683,7 @@ public class FunctionController extends BaseController
             Folder oldFolder = folderService.getFolderById(operateId);
             userLog.setFileFolderName(oldFolder.getFolderName());
             userLog.setFile(false);
-            Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, oldFolder.getFolderName());
+            Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, oldFolder.getFolderName(), loginUser.getFileStoreId());
             if (folderByPIdAndName == null){
                 Folder newFolder = Folder.builder()
                         .folderName(oldFolder.getFolderName())
@@ -811,7 +811,7 @@ public class FunctionController extends BaseController
                 logService.recordLog(userLog);
                 return new R(false, "不能将文件夹移动到自身或其子目录下");
             }
-            Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, nowFolder.getFolderName());
+            Folder folderByPIdAndName = folderService.getFolderByPIdAndName(parentFolderId, nowFolder.getFolderName(), loginUser.getFileStoreId());
             if (folderByPIdAndName != null){
                 userLog.setOperationSuccess(false);
                 logService.recordLog(userLog);

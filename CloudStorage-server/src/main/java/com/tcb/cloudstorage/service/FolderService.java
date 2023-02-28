@@ -62,7 +62,7 @@ public interface FolderService
      * @param folderName
      * @return
      */
-    public Folder getFolderByPIdAndName(int parentFolderId, String folderName);
+    public Folder getFolderByPIdAndName(int parentFolderId, String folderName, int fileStoreId);
 
 
 }
