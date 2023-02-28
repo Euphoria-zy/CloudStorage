@@ -1,13 +1,13 @@
 import {createRouter, createWebHistory} from "vue-router";
 import Login from "@/view/Login.vue";
 import Index from "@/view/Index.vue";
+import Document from "@/view/Document.vue";
+import Video from "@/view/Video.vue";
+import Image from "@/view/Image.vue";
+import Music from "@/view/Music.vue";
+import Other from "@/view/Other.vue";
 import ViewLog from "@/view/ViewLog.vue";
-import DocumentTable from "@/components/DocumentTable.vue";
-import VideoTable from "@/components/VideoTable.vue";
-import ImageTable from "@/components/ImageTable.vue";
-import MusicTable from "@/components/MusicTable.vue";
-import OtherTable from "@/components/OtherTable.vue";
-import FileList from "@/view/Files.vue";
+
 let router = createRouter({
     history: createWebHistory(),
     routes: [
@@ -17,38 +17,40 @@ let router = createRouter({
             component: Login
         },
         {
-            path: "/index",
+            path: "/",
             name: "首页",
             component: Index,
-            redirect: "/index/files",
-            children: 
-            [
-                {
-                    path: "/index/files",
-                    component: FileList
-                },
-                {
-                    path: "/index/document",
-                    component: DocumentTable
-                },
-                {
-                    path: "/index/video",
-                    component: VideoTable
-                },
-                {
-                    path: "/index/music",
-                    component: MusicTable
-                },
-                {
-                    path: "/index/other",
-                    component: OtherTable
-                },
-                {
-                    path: "/index/image",
-                    component: ImageTable
-                },
-                
-            ]
+            redirect: "/index"
+        },
+        {
+            path: "/index",
+            name: "全部文件",
+            component: Index
+        },
+        {
+            path: "/document",
+            name: "文档",
+            component: Document
+        },
+        {
+            path: "/video",
+            name: "视频",
+            component: Video
+        },
+        {
+            path: "/music",
+            name: "音乐",
+            component: Music
+        },
+        {
+            path: "/image",
+            name: "图片",
+            component: Image
+        },
+        {
+            path: "/other",
+            name: "其他",
+            component: Other
         },
         {
             path: "/viewLog",
