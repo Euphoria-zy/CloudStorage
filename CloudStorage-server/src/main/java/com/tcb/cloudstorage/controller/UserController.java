@@ -1,17 +1,11 @@
 package com.tcb.cloudstorage.controller;
 
-import com.qcloud.cos.COSClient;
-import com.qcloud.cos.transfer.TransferManager;
-import com.tcb.cloudstorage.bucket_op.BucketOperation;
-import com.tcb.cloudstorage.client.COS_Client;
 import com.tcb.cloudstorage.domain.User;
-import com.tcb.cloudstorage.mapper.UserMapper;
-import com.tcb.cloudstorage.object_op.FileUpLoadWithTM;
+import com.tcb.cloudstorage.service.LoginService;
 import com.tcb.cloudstorage.service.UserService;
-import com.tcb.cloudstorage.transfer_manager.TransferManagerManage;
+import com.tcb.cloudstorage.utils.COSUtils;
 import com.tcb.cloudstorage.utils.CheckCodeGenerate;
 import com.tcb.cloudstorage.utils.EmailService;
-import com.tcb.cloudstorage.utils.MultipartFileToFile;
 import com.tcb.cloudstorage.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -20,9 +14,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
 
-import java.io.File;
-import java.io.IOException;
+import java.net.URL;
 import java.security.GeneralSecurityException;
+import java.util.HashMap;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/user")
@@ -30,7 +25,8 @@ public class UserController extends BaseController
 {
     @Autowired
     private UserService userService;
-
+    @Autowired
+    private LoginService loginService;
     /**
      * @Description 登录功能
      * @param user
@@ -39,13 +35,8 @@ public class UserController extends BaseController
     @RequestMapping("/login")
     public R login(@RequestBody User user)
     {
-        User userInfo = userService.getUserByUsernameAndPwd(user);
-        if (userInfo != null){
-            session.setAttribute("loginUser", userInfo);
-            System.out.println("登陆成功:"+userInfo.getUsername());
-            return new R(true, "登陆成功，跳转到首页!");
-        } else
-            return new R(false, "登录失败,用户名或密码错误!");
+        R login = loginService.login(user);
+        return login;
     }
 
     /**
@@ -96,6 +87,29 @@ public class UserController extends BaseController
             }
         }else
             return new R(false, "验证码错误，请重新输入!");
+    }
+
+    @RequestMapping("/uploadHeadImage")
+    public R uploadHeadImage(@RequestParam MultipartFile headImage)
+    {
+        String key = loginUser.getUsername()+"/"+"headImage"+headImage.getOriginalFilename();
+        boolean b1 = COSUtils.uploadFile(key, headImage);
+        if (b1) {
+            URL viewObjectUrl = COSUtils.getViewObjectUrl(key);
+            User user = loginUser;
+            user.setImagePath(viewObjectUrl.toString());
+            boolean b2 = userService.updateUserInfo(user);
+            if (b2) {
+                Map<String, Object> map = new HashMap<>();
+                map.put("headImage", viewObjectUrl.toString());
+                map.put("currentUser", user);
+                return new R(true, "上传头像成功!", map);
+            } else {
+                COSUtils.deleteFile(key);
+                return new R(false, "上传头像失败，请重新上传!");
+            }
+        }else
+            return new R(false,"上传头像是失败!");
     }
 
     /**
@@ -156,5 +170,12 @@ public class UserController extends BaseController
             return new R(false, "验证码发送失败!");
         }
         return new R(true, "验证码发送成功!");
+    }
+
+    @RequestMapping("/loginOut")
+    public R loginOut()
+    {
+        R loginOut = loginService.loginOut();
+        return loginOut;
     }
 }

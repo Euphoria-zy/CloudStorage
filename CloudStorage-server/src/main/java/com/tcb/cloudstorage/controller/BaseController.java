@@ -1,6 +1,10 @@
 package com.tcb.cloudstorage.controller;
 
+import com.tcb.cloudstorage.domain.LoginUser;
 import com.tcb.cloudstorage.domain.User;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -24,7 +28,14 @@ public class BaseController
     @ModelAttribute
     public void ReqAndResp(HttpServletRequest request, HttpServletResponse response)
     {
-        this.session = request.getSession(true);
-        this.loginUser = (User) session.getAttribute("loginUser");
+        //获取SecurityContextHolder中的用户信息
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        if (authentication == null){
+            throw new RuntimeException();
+        }
+        if (authentication.getPrincipal() instanceof UserDetails) {
+            LoginUser loginInfo = (LoginUser) authentication.getPrincipal();
+            this.loginUser = loginInfo.getUser();
+        }
     }
 }

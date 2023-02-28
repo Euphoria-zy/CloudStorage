@@ -1,6 +1,5 @@
 package com.tcb.cloudstorage.service.impl;
 
-import com.alibaba.fastjson.JSON;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
@@ -9,10 +8,13 @@ import com.tcb.cloudstorage.domain.User;
 import com.tcb.cloudstorage.mapper.UserMapper;
 import com.tcb.cloudstorage.service.FileStoreService;
 import com.tcb.cloudstorage.service.UserService;
-import com.tcb.cloudstorage.utils.JedisUtils;
+import com.tcb.cloudstorage.utils.RedisUtil;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-import redis.clients.jedis.Jedis;
+
+import java.util.concurrent.TimeUnit;
 
 @Service
 public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements UserService
@@ -22,6 +24,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
 
     @Autowired
     private FileStoreService fileStoreService;
+
+    @Autowired
+    private RedisUtil redisUtil;
+
+    @Autowired
+    private PasswordEncoder passwordEncoder;
 
     //注册
     @Override
@@ -33,6 +41,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         if (root != null)
             return false;
         else {
+            String encode = passwordEncoder.encode(user.getPassword());
+            user.setPassword(encode);
             if (userMapper.insertUser(user) > 0){
                 //注册成功初始化文件仓库
                 FileStore fileStore = FileStore.builder().userId(user.getUserId()).currentSize(0).build();
@@ -54,7 +64,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         lambdaQueryWrapper.eq(User::getUsername, username);
         User root = userMapper.selectOne(lambdaQueryWrapper);
         if (root != null) {
-            User user = User.builder().userId(root.getUserId()).username(username).password(newPwd).build();
+            String encode = passwordEncoder.encode(newPwd);
+            User user = User.builder().userId(root.getUserId()).username(username).password(encode).build();
             userMapper.update(user, lambdaQueryWrapper);
             return true;
         }
@@ -65,12 +76,11 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public boolean compareCheckCode(User user, String checkCode)
     {
         String key = "CheckCode"+user.getUsername();
-        Jedis jedisPool = JedisUtils.getJedisPool();
-        String code = jedisPool.get(key);
+        String code = (String) redisUtil.getCacheObject(key);
         if (code == "" || code == null) 
             return false;
         else if (code.equals(checkCode)) {
-            jedisPool.del(key);
+            redisUtil.deleteObject(key);
             return true;
         }
         else 
@@ -81,10 +91,8 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
     public void saveCheckCode(User user, String checkCode)
     {
         String key = "CheckCode"+user.getUsername();
-        Jedis jedisPool = JedisUtils.getJedisPool();
         //设置过期时间，2分钟
-        jedisPool.setex(key, 2*60, checkCode);
-        jedisPool.close();
+        redisUtil.setCacheObject(key,checkCode,2, TimeUnit.MINUTES);
     }
 
     @Override
@@ -104,6 +112,12 @@ public class UserServiceImpl extends ServiceImpl<UserMapper, User> implements Us
         lambdaQueryWrapper.eq(User::getUsername, user.getUsername());
         User root = userMapper.selectOne(lambdaQueryWrapper);
         return root;
+    }
+
+    @Override
+    public boolean updateUserInfo(User user)
+    {
+        return userMapper.updateById(user)>0;
     }
 
 }

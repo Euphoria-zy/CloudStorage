@@ -19,4 +19,5 @@ public interface UserService
 
     public User getUserByUsernameAndPwd(User user);
     public User getUserByUsername(User user);
+    public boolean updateUserInfo(User user);
 }

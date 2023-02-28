@@ -4,6 +4,9 @@ export default {
     login: params =>{
         return API.POST("/user/login", params)
     },
+    loginOut: () =>{
+        return API.POST("/user/loginOut")
+    },
     register: params =>{
         return API.POST("/user/register", params)
     },
@@ -15,5 +18,8 @@ export default {
     },
     getForgetPwdCode: params =>{
         return API.POST("/user/getChangePwdCode", params)
+    },
+    uploadHeadImage: params =>{
+        return API.POST("/user/uploadHeadImage", params)
     }
 }

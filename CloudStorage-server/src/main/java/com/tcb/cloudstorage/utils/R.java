@@ -15,6 +15,7 @@ import lombok.Data;
 public class R
 {
     private boolean flag;
+    private String code;
     private String msg;
     private Object data;
     public R(){}
@@ -27,6 +28,12 @@ public class R
     {
         this.flag = flag;
         this.msg = msg;
+    }
+    public R(boolean flag, String msg, String code)
+    {
+        this.flag = flag;
+        this.msg = msg;
+        this.code = code;
     }
     public R(boolean flag, Object data)
     {

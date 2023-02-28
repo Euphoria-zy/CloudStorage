@@ -48,6 +48,7 @@ import SideBar from '@/components/SideBar.vue';
 import ElSubmenu from 'element-plus';
 import FileList from '@/view/Files.vue';
 import DocumentTable from '../components/DocumentTable.vue';
+import bus from "../bus";
 export default {
     components: {
         TopBar,
@@ -60,6 +61,15 @@ export default {
         return {
             pageIndex: 1
         }
+    },
+    created(){
+        bus.on("goto", url => {
+            if (url === "/login") {
+                localStorage.removeItem("access-user");
+            }
+            this.$router.push(url);
+        });
+        this.defaultActiveIndex = this.$route.path;
     },
     methods: {
         handleOpen(key, keyPath) {

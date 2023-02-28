@@ -1,16 +1,12 @@
 package com.tcb.cloudstorage.controller;
 
-import com.alibaba.fastjson.JSON;
 import com.tcb.cloudstorage.domain.FileStoreInfo;
 import com.tcb.cloudstorage.domain.Folder;
-import com.tcb.cloudstorage.domain.User;
 import com.tcb.cloudstorage.domain.UserFile;
-import com.tcb.cloudstorage.mapper.FileStoreMapper;
 import com.tcb.cloudstorage.service.FileService;
 import com.tcb.cloudstorage.service.FileStoreService;
 import com.tcb.cloudstorage.service.FolderService;
 import com.tcb.cloudstorage.service.LogService;
-import com.tcb.cloudstorage.utils.JedisUtils;
 import com.tcb.cloudstorage.utils.R;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.RequestMapping;

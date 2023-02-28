@@ -57,5 +57,25 @@ let router = createRouter({
         },
     ]
 });
-
+//路由守卫：to:要去的路由,from: 当前路由,next(): 放行
+router.beforeEach((to, from, next) => {
+    if (to.path.startsWith('/login')) {
+        window.localStorage.removeItem('access-token')
+        next()
+    } else if (to.path.startsWith('/index')) {
+        let user = window.localStorage.getItem('access-token');
+        if (!user) {
+            next({path: '/login'})
+        } 
+        next()
+    } else if (to.path.startsWith('/viewLog')) {
+        let user = window.localStorage.getItem('access-token');
+        if (!user) {
+            next({path: '/login'})
+        } 
+        next()
+    } else {
+        next()
+    }
+});
 export default router;

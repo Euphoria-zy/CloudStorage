@@ -230,6 +230,8 @@ export default {
                             that.loading = false;
                             console.log(res);
                             if (res.flag) {
+                                window.localStorage.setItem("access-token", res.data.token);
+                                window.localStorage.setItem("currentUser", JSON.stringify(res.data.currentUser));
                                 that.$message({ message: res.msg, type: "success" });
                                 that.$router.push({ path: "/index" });
                             } else {

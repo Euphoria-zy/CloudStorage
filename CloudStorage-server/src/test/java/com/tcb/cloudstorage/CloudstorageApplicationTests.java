@@ -13,14 +13,11 @@ import com.tcb.cloudstorage.service.FileService;
 import com.tcb.cloudstorage.service.FileStoreService;
 import com.tcb.cloudstorage.service.LogService;
 import com.tcb.cloudstorage.utils.COSUtils;
-import com.tcb.cloudstorage.utils.JedisUtils;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.web.client.RestTemplate;
-import redis.clients.jedis.Jedis;
 
-import java.io.File;
 import java.net.URL;
 import java.security.GeneralSecurityException;
 import java.sql.Timestamp;
@@ -83,13 +80,6 @@ class CloudstorageApplicationTests
         user.setPassword("123456789");
         userMapper.insertUser(user);
         System.out.println(user.getUserId());
-    }
-    @Test
-    void testRedis()
-    {
-        Jedis jedisPool = JedisUtils.getJedisPool();
-        jedisPool.set("root","1213141");
-        jedisPool.close();
     }
     @Test
     void testAddFileStore()

@@ -7,12 +7,14 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.io.Serializable;
+
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
 @TableName(value = "user")
-public class User
+public class User implements Serializable
 {
     //用户id
     @TableId(value = "user_id")
